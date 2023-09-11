@@ -1,0 +1,67 @@
+1、启动app之后开始进行扫描
+2、将扫描的信息存入文件内
+3、当文件大小到达5MB时进行压缩打包并开启一个文件进行存储
+4、循环往复直到活动被销毁
+
+
+先开总电源-》开5g电源-》收发指令
+
+新流程：
+指令过程
+AT+CNMP=71
+
+AT+CSYSSEL="nr5g band",28:41:79
+AT+CNWSEARCH="nr5g ext",1,28:41:79
+AT+C5GCELLCEG="unlock"
+AT+CMGRMI 配置邻居数据
+AT+CMGRMI=6	获取数据
+这6个指令只能获取模块的数据、没有wifi、gps、device
+
+数据获取与处理与调用流程：
+ReadThread线程内获取数据
+调用UartReadMsg获取处理信息
+parseData 处理信息并切换下一条指令
+DriveService中的BsThread循环给串口发指令
+SerialPortController中的ReadThread循环从串口读指令
+
+向服务器发送数据
+接收服务器的数据
+
+
+NrmInfo中获得数据lcData交给DriveDataThread.Str_nrm
+
+
+NrmInfo5g 模块数据
+WifiPhone Wifi数据
+WifiModule Wifi_Device数据
+GpsUtil gps数据
+OtherData 设备数据
+
+
+DriveDataThread中整合数据并打包压缩（run内）等
+UploadDataThread处理上传数据等
+
+
+
+
+顺序？谁先谁后，在哪里调用的？
+在DviceService中统一调用，Socket只有在Wifi通讯才用，先初始化信息类Info、再初始化Socket
+
+// 以下为与H30 WIFI通讯用
+MessageTransceiver回传数据解析类，处理数据并调用ZTcpClient建立Socket连接发送数据
+
+
+目前思路：
+先把移动5g的数据的解析，压缩给写出来。其他的空着
+解析：
+首先循环一直发指令(间隔时间可能是波特率？)，收到之后判断是Nr_M的就调用解析方法开始解析。
+
+解析方法 接收一个info数据，返回解析后的数据。接收info数据后将需要的数据取出，不需要的数据不管。
+解析后的数据调用 保存方法 保存到文件中。保存方法 接受一个保存内容，返回boolen是否保存成功，方法内首先判断当前文件夹中是否有txt文件，如果没有则调用 创建新文件方法 创建一个新txt文件然后开始存储，如果存在txt文件则判断大小小于5mb则继续写入，>=5mb的时候调用 打包方法 将文件打包压缩并调用 创建新文件方法 创建新文件继续存储。
+打包方法 接受一个要打包的文件，返回是否打包成功boolen，方法内首先将要打包的文件给压缩，然后删除要打包的文件。
+
+处理数据流程
+请求权限->开启服务->备份最近100个文件,开启线程删除备份文件->供电->发指令->
+
+
+
