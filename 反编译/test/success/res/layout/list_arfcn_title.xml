@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="horizontal" android:background="#ffe6e6e6" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="0.0dip" android:layout_marginRight="0.0dip">
+        <TextView android:textStyle="bold" android:textColor="#ff666666" android:gravity="center" android:id="@id/title_tac" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/tv_tac" android:layout_weight="2.0" />
+        <TextView android:textStyle="bold" android:textColor="#ff666666" android:gravity="center" android:id="@id/title_eci" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/tv_nci" android:layout_weight="2.0" />
+        <TextView android:textStyle="bold" android:textColor="#ff666666" android:gravity="center" android:id="@id/title_arfcn" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/tv_arfcn" android:layout_weight="1.8" />
+        <TextView android:textStyle="bold" android:textColor="#ff666666" android:gravity="center" android:id="@id/title_pci" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/tv_pci" android:layout_weight="1.0" />
+        <TextView android:textStyle="bold" android:textColor="#ff666666" android:gravity="center" android:id="@id/title_rx" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/tv_rx" android:layout_weight="1.0" />
+        <TextView android:textStyle="bold" android:textColor="#ff666666" android:gravity="center" android:id="@id/title_act" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/tv_act" android:layout_weight="1.2" />
+    </LinearLayout>
+</LinearLayout>

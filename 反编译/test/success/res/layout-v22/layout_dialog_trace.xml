@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <TextView android:textSize="20.0sp" android:textColor="@color/title_text" android:gravity="center" android:id="@id/tv_title" android:background="@color/title_bar" android:padding="10.0dip" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/trace_cfg" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
+    <RadioGroup android:orientation="horizontal" android:id="@id/radiogroup" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5.0dip" android:layout_marginStart="5.0dip" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/tv_title">
+        <RadioButton android:textSize="16.0sp" android:textColor="@color/radiobutton_tvcolor" android:id="@id/rb_first" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="4.0dip" android:layout_marginRight="4.0dip" android:checked="true" android:button="@null" android:text="@string/cell_1" android:layout_marginHorizontal="4.0dip" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/tv_title" />
+        <RadioButton android:textSize="16.0sp" android:textColor="@color/radiobutton_tvcolor" android:id="@id/rb_second" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" android:button="@null" android:text="@string/cell_2" android:layout_marginStart="5.0dip" app:layout_constraintStart_toEndOf="@id/rb_first" app:layout_constraintTop_toBottomOf="@id/tv_title" />
+    </RadioGroup>
+    <LinearLayout android:orientation="vertical" android:id="@id/config" android:layout_width="fill_parent" android:layout_height="wrap_content" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/radiogroup">
+        <LinearLayout android:orientation="vertical" android:id="@id/cell_1" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="5.0dip" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/radiogroup">
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="40.0dip" android:layout_marginLeft="14.0dip" android:layout_marginRight="14.0dip" android:layout_marginHorizontal="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/title_bar" android:layout_width="40.0dip" android:layout_height="wrap_content" android:text="@string/ed_arfcn" />
+                <EditText android:textColor="@color/main_text_color" android:id="@id/ed_arfcn" android:layout_width="100.0dip" android:layout_height="wrap_content" android:maxLength="7" android:inputType="number" />
+                <TextView android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" />
+                <TextView android:textSize="14.0sp" android:textColor="@color/main_text_color" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="分裂频点：" />
+                <EditText android:textColor="@color/main_text_color" android:id="@id/ed_split_arfcn" android:layout_width="100.0dip" android:layout_height="wrap_content" android:maxLength="7" android:inputType="number" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="40.0dip" android:layout_marginStart="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/title_bar" android:layout_width="40.0dip" android:layout_height="wrap_content" android:text="@string/ed_pci" />
+                <EditText android:textColor="@color/main_text_color" android:id="@id/ed_pci" android:layout_width="100.0dip" android:layout_height="wrap_content" android:maxLength="4" android:inputType="number" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="40.0dip" android:layout_marginLeft="14.0dip" android:layout_marginRight="14.0dip" android:layout_marginHorizontal="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/title_bar" android:layout_width="40.0dip" android:layout_height="wrap_content" android:text="IMSI" />
+                <AutoCompleteTextView android:textColor="@color/main_text_color" android:id="@id/ed_imsi" android:layout_width="0.0dip" android:layout_height="wrap_content" android:maxLength="15" android:completionThreshold="1" android:layout_weight="1.0" android:inputType="number" />
+                <Button android:layout_gravity="center_vertical" android:id="@id/btn_imsi_add" android:background="@drawable/btn_add" android:layout_width="25.0dip" android:layout_height="25.0dip" android:layout_margin="5.0dip" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="40.0dip" android:layout_marginLeft="14.0dip" android:layout_marginRight="14.0dip" android:layout_marginHorizontal="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/main_text_color" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/ue_max_power" android:layout_weight="1.0" />
+                <ToggleButton android:gravity="end" android:id="@id/tb_ue_maxpwr_first" android:background="@drawable/tgl_on_ff" android:focusable="false" android:layout_width="44.0dip" android:layout_height="22.0dip" android:checked="false" android:textOn="" android:textOff="" android:layout_marginEnd="10.0dip" />
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:orientation="vertical" android:id="@id/cell_2" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="5.0dip" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/radiogroup">
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="40.0dip" android:layout_marginLeft="14.0dip" android:layout_marginRight="14.0dip" android:layout_marginHorizontal="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/title_bar" android:layout_width="40.0dip" android:layout_height="wrap_content" android:text="@string/ed_arfcn" />
+                <EditText android:textColor="@color/main_text_color" android:id="@id/ed_arfcn_second" android:layout_width="100.0dip" android:layout_height="wrap_content" android:maxLength="7" android:inputType="number" />
+                <TextView android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" />
+                <TextView android:textSize="14.0sp" android:textColor="@color/main_text_color" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="分裂频点：" />
+                <EditText android:textColor="@color/main_text_color" android:id="@id/ed_split_arfcn_second" android:layout_width="100.0dip" android:layout_height="wrap_content" android:maxLength="7" android:inputType="number" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="40.0dip" android:layout_marginStart="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/title_bar" android:layout_width="40.0dip" android:layout_height="wrap_content" android:text="@string/ed_pci" />
+                <EditText android:textColor="@color/main_text_color" android:id="@id/ed_pci_second" android:layout_width="100.0dip" android:layout_height="wrap_content" android:maxLength="4" android:inputType="number" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="40.0dip" android:layout_marginLeft="14.0dip" android:layout_marginRight="14.0dip" android:layout_marginHorizontal="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/title_bar" android:layout_width="40.0dip" android:layout_height="wrap_content" android:text="IMSI" />
+                <AutoCompleteTextView android:textColor="@color/main_text_color" android:id="@id/ed_imsi_second" android:layout_width="0.0dip" android:layout_height="wrap_content" android:maxLength="15" android:completionThreshold="1" android:layout_weight="1.0" android:inputType="number" />
+                <Button android:layout_gravity="center_vertical" android:id="@id/btn_imsi_add_second" android:background="@drawable/btn_add" android:layout_width="25.0dip" android:layout_height="25.0dip" android:layout_margin="5.0dip" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="40.0dip" android:layout_marginLeft="14.0dip" android:layout_marginRight="14.0dip" android:layout_marginHorizontal="14.0dip">
+                <TextView android:textSize="14.0sp" android:textColor="@color/main_text_color" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/ue_max_power" android:layout_weight="1.0" />
+                <ToggleButton android:gravity="end" android:id="@id/tb_ue_maxpwr_second" android:background="@drawable/tgl_on_ff" android:focusable="false" android:layout_width="44.0dip" android:layout_height="22.0dip" android:checked="false" android:textOn="" android:textOff="" android:layout_marginEnd="10.0dip" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <View android:background="@color/line_color" android:layout_width="fill_parent" android:layout_height="1.0dip" android:layout_marginTop="5.0dip" app:layout_constraintTop_toBottomOf="@id/config" />
+    <TextView android:textSize="16.0sp" android:textColor="@color/main_text_color" android:layout_gravity="center_horizontal" android:id="@id/tv_black_list" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10.0dip" android:text="@string/black_list" android:layout_marginStart="10.0dip" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/config" />
+    <View android:background="@color/line_color" android:layout_width="fill_parent" android:layout_height="1.0dip" android:layout_marginTop="5.0dip" app:layout_constraintTop_toBottomOf="@id/tv_black_list" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@id/bl_imsi_list" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip" android:drawSelectorOnTop="false" android:maxHeight="120.0dip" android:divider="#00000000" android:dividerHeight="0.0dip" android:minHeight="50.0dip" app:layout_constraintTop_toBottomOf="@id/tv_black_list" />
+    <LinearLayout android:orientation="vertical" android:id="@id/ll_arfcn_list" android:layout_width="fill_parent" android:layout_height="wrap_content" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/bl_imsi_list">
+        <include layout="@layout/list_arfcn_title" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@id/arfcn_list" android:layout_width="fill_parent" android:layout_height="wrap_content" android:drawSelectorOnTop="false" android:divider="@color/line_color" />
+    </LinearLayout>
+    <LinearLayout android:orientation="horizontal" android:id="@id/ll_btn" android:background="#ffffffff" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginBottom="10.0dip" android:baselineAligned="false" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent">
+        <Button android:textSize="18.0dip" android:textColor="@color/btn_text" android:id="@id/btn_ok" android:background="@drawable/btn_bgl_big" android:layout_width="0.0dip" android:layout_height="wrap_content" android:minWidth="60.0dip" android:minHeight="40.0dip" android:text="@string/confirm" android:layout_weight="1.0" android:layout_marginStart="20.0dip" />
+        <Button android:textSize="18.0dip" android:textColor="@color/btn_text" android:id="@id/btn_cancel" android:background="@drawable/btn_bgl_big" android:layout_width="0.0dip" android:layout_height="wrap_content" android:minWidth="60.0dip" android:minHeight="40.0dip" android:text="@string/cancel" android:layout_weight="1.0" android:layout_marginStart="15.0dip" android:layout_marginEnd="20.0dip" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
