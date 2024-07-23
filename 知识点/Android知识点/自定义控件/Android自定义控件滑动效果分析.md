@@ -169,3 +169,118 @@ case MotionEvent.ACTION_UP:
 
 ### ⑦ ViewDragHelper
 
+例子：实现一个类似qq滑动侧边栏的布局：初始时显示内容，手指滑动超过一段距离则侧滑显示菜单
+
+1、初始化ViewDragHelper
+
+ViewDragHelper通常定义在ViewGroup的内部，第一个参数为要监听的View
+
+```
+mViewDragHelper = ViewDragHelper.create(this, callback)
+```
+
+2、重写拦截事件
+
+```java
+Override
+public boolean onInterceptTouchEvent (MotionEvent ev) {
+	return mViewDragHelper. shouldInterceptTouchEvent (ev);
+}
+Override
+public boolean onTouchEvent (MotionEvent event) {
+	//将触摸事件传递给ViewDragHelper，此操作必不可少
+	mViewDragHelper. processTouchEvent (event);
+	return true;
+}
+```
+
+3、重写computeScroll()
+
+ViewDragHelper内部也是通过Scroller实现的平滑移动
+
+```java
+@Override
+public void computeScroll() {
+	if (mViewDragHelper. continueSettling(true)) {
+		ViewCompat. postInvalidateOnAnimation(this):
+	}
+}
+```
+
+4、处理回调Callback
+
+创建Callback，返回值可以指定哪个子View可以移动，mMainView==child指定了mMainView是可以被拖动的，clampViewPositionVertical和clampViewPositionHorizontal分别对应竖直和水平方向上的滑动，默认值为0表示不滑动。参数top表示在垂直方向上child移动的距离，通常情况下只需要返回top和left即可，当需要更精确的计算padding时则需要做一些处理。
+
+```java
+private ViewDragHelper. Callback callback = new ViewDragHelper. Callback(){
+	@0verride
+	public boolean tryCaptureView(View child, int pointerId) [
+		return mMainView==child;
+    }
+    @Override
+	public int clampViewPositionVertical (View child, int top, int dy) {
+		return 0:
+	}
+	@Override
+	public int clampViewPositionHorizontal (View child, int left, int dx) {
+		return left:
+	}
+};
+```
+
+5、实现距离不够时回到原位置
+
+ViewDragHelper. Callback中提供了onViewReleased方法可以简单实现当手机离开屏幕后的操作，内部实现也是通过Scroller的，这也是前面重写computeScroll的原因。
+
+```java
+//拖动结束后调用
+@Override
+public void onViewReleased (Vies releasedChild, float xvel, float yvel) (
+	super, onViewReleased (releasedChild, xvel, yvel):
+	//手指抬起后缓慢移动到指定位置
+	if(mMainView. getLeft() <500) (
+		//关闭菜单
+    	//相当于Scroller的startScroll方法
+		mViewDragHelper. smoothSlideViewTo(mMainView, 0, 0);
+		ViexCompat.postInvalidateOnAnimation(DragViexGroup. this);
+    } else {
+		//打开菜单
+		mViewDragHelper, smoothSlideViewTo(mMainView, 300, 0) ;
+		ViewCompat. postInvalidateOnAnimation(DragViewGroup. this);
+    }
+}
+```
+
+以上代码实现当mMainView左边距小于500时使用smoothSlideViewTo将mMainView还原到初始状态，而大于500时移动到(300,0)坐标，即显示MenuView。
+
+6、最后进行滑动处理
+
+```java
+//加载完布局文件后调用
+@Override
+protected void onFinishInflate() {
+	super. onFinishInflateO:
+	mMenuView=getChildAt(0):
+	mMainView=getChildAt(1):
+}
+@Override
+protected void onSizeChanged (int =, int h, int oldw, int oldh)(
+	super. onSizeChanged(w, h, oldw, oldh):
+	mWidth=mMenuView. getMeasuredWidth():
+}
+```
+
+onFinishInflate内定义子View，onSizeChanged内获取View的宽度mWidth，可以用于根据View的宽度处理滑动后的效果。
+
+ViewDragHelper其他方法		
+
+onViewCaptured()	用户触摸View后回调
+
+onViewDragStateChanged()	拖拽状态改变时回调，比如idle,dragging等
+
+onViewPositionChanged()	位置改变时回调，用于滑动时更改scale进行缩放等效果。
+
+完整代码
+
+见书
+
