@@ -1,0 +1,838 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<!-- saved from url=(0050)http://www.linuxidc.com/Linux/2011-04/33966p26.htm -->
+<HTML lang=utf-8 xmlns="http://www.w3.org/1999/xhtml"><HEAD><TITLE>Android GDI之SurfaceFlinger_Android核心分析</TITLE>
+<META http-equiv=content-type content=text/html;charset=utf-8><LINK 
+href="favicon.ico" type=image/x-icon rel=icon><LINK href="favicon.ico" 
+type=image/x-icon rel="shortcut icon">
+<META 
+content="作为一个从其他平台装接过来的程序员，要从事Andoid平台系统开发，我的关于手机平台上积累的知识已经不能满足需要了，Android为我们带来了大量的新名词，Activity，Manifest，INTENT，Service，Binder，Dalvik虚拟机，Framework，Linux，Navtive ，JNI.....。通过在源代码，在开发社区，在开发博客，甚至在招聘过程中，我不断的寻求Android是什么。经过一定时间的沉淀，我慢慢的理解到Android不仅仅是一类手机的总称，不仅仅是一个手机开发平台，不仅仅是一个虚拟java操作系统，不仅仅是一个开发社区，一个开发标准，不仅仅是一堆代码，Android已经成了一个新的潮流。" 
+name=description>
+<META content=Linux,ubuntu,Fedora,红旗Linux,suse,SQL,PHP,mysql,apache,Linux公社 
+name=keywords>
+<META content="MSHTML 6.00.2900.6169" name=GENERATOR>
+<META content=Linux name=generator><LINK 
+href="Android GDI之SurfaceFlinger_Android核心分析_files/style.css" type=text/css 
+rel=stylesheet>
+<SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/head.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT type=text/javascript>
+var imgMaxWidth=600;
+var urlPrefix="../../";
+</SCRIPT>
+
+<SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/show.js" 
+type=text/javascript></SCRIPT>
+</HEAD>
+<BODY>
+<DIV class=twidth>
+<DIV id=sitehead>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<TABLE width="100%">
+  <TBODY>
+  <TR align=middle>
+    <TD width=160><A href="http://www.linuxidc.com/"><IMG 
+      style="FILTER: chroma(color=#FFFFFF)" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/logo.jpg" border=0></A> 
+    </TD>
+    <TD>
+      <DIV align=center>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></TD>
+    <TD style="LINE-HEIGHT: 120%" width=100><A 
+      onclick="javascript:window.external.addFavorite('http://www.linuxidc.com/','Linux公社-Linux|Ubuntu|Fedora|新闻|下载|教程|安装|SUSE|Linux发行版|编程|服务器')" 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p26.htm#">加入收藏</A><BR><A 
+      href="http://www.linuxidc.com/sitemap.aspx">网站地图</A><BR><A 
+      href="http://www.linuxidc.com/search.aspx">网站搜索</A><BR>
+      <SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/language.js" 
+      type=text/javascript></SCRIPT>
+    </TD></TR></TBODY></TABLE></DIV></DIV>
+<DIV id=navbar>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/popmenu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+<A class=first href="http://www.linuxidc.com/index.htm">首页</A><A 
+href="http://www.linuxidc.com/it/index.htm">Linux新闻</A><A 
+href="http://www.linuxidc.com/Linuxit/index.htm">Linux技术交流</A><A 
+href="http://www.linuxidc.com/MySql/index.htm">数据库技术</A><A class=thisclass 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A><A 
+href="http://www.linuxidc.com/Apache/index.htm">服务器应用</A><A 
+href="http://www.linuxidc.com/Unix/index.htm">Linux网络安全</A><A 
+href="http://www.linuxidc.com/download/index.htm">Linux下载</A><A 
+href="http://www.linuxidc.com/Linuxrz/index.htm">Linux认证</A><A 
+href="http://www.linuxidc.com/theme/index.htm">Linux主题</A><A 
+href="http://www.linuxidc.com/Linuxwallpaper/index.htm">Linux壁纸</A><A 
+href="http://www.linuxidc.com/digi/index.htm">数码</A><A 
+href="http://www.linuxidc.com/mobile/index.htm">手机</A><A 
+href="http://www.linuxidc.com/nbook/index.htm">笔记本</A> </DIV></DIV>
+<DIV id=navsub>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m><A href="http://www.linuxidc.com/index.htm">首页</A> → <A 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A> </DIV></DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/linux1.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/linuxa.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<TABLE id=middle style="TABLE-LAYOUT: fixed" cellSpacing=0 cellPadding=0 
+width="100%">
+  <TBODY>
+  <TR>
+    <TD vAlign=top>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>阅读内容</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm id=bodyTd>
+      <DIV id=printBody style="WORD-BREAK: break-all"><BR>
+      <DIV align=center>
+      <H1 class=aTitle>Android核心分析</H1></DIV>
+      <DIV align=center>
+      <H2 class=subTitle>Android GDI之SurfaceFlinger</H2></DIV>
+      <TABLE width="97%" align=center>
+        <TBODY>
+        <TR>
+          <TD width=120>[日期：2011-04-01]</TD>
+          <TD align=middle>来源：Linux社区&nbsp; 作者：maxleng</TD></TR></TBODY></TABLE>
+      <DIV class=linua>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux2.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linub>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux19.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV id=content>
+      <H3 align=center><FONT face=宋体><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A> 
+      GDI之SurfaceFlinger</FONT></H3>
+      <P><FONT face=宋体 
+      size=4>SurfaceFinger按英文翻译过来就是Surface投递者。SufaceFlinger的构成并不是太复杂，复杂的是他的客户端建构。SufaceFlinger主要功能是：</FONT></P>
+      <P><FONT face=宋体 size=4>1） 将Layers （Surfaces） 内容的刷新到屏幕上</FONT><!--IWMS_AD_BEGIN-->
+      <TABLE width="97%" align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=3>
+            <DIV align=center>
+            <SCRIPT language=javaScript 
+            src="Android GDI之SurfaceFlinger_Android核心分析_files/system60.js" 
+            type=text/javascript></SCRIPT>
+            </DIV></TD></TR></TBODY></TABLE><!--IWMS_AD_END--></P>
+      <P><FONT face=宋体 size=4>2） 维持Layer的Zorder序列，并对Layer最终输出做出裁剪计算。</FONT></P>
+      <P><FONT face=宋体 size=4>3） 响应Client要求，创建Layer与客户端的Surface建立连接</FONT></P>
+      <P><FONT face=宋体 size=4>4） 接收Client要求，修改Layer属性（输出大小，Alpha等设定）</FONT></P>
+      <P><FONT face=宋体 
+      size=4>但是作为投递者的实际意义，我们首先需要知道的是如何投递，投掷物，投递路线，投递目的地。</FONT></P>
+      <H4 align=center><FONT face=宋体 size=4></FONT></H4>
+      <H3 align=center>1&nbsp; SurfaceFlinger的基本组成框架</H3>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=365 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041401.png" 
+      width=599 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <P><FONT face=宋体 size=4>SurfaceFlinger管理对象为：</FONT></P>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 size=4>mClientsMap：管理客户端与服务端的连接。</FONT></P>
+        <P><FONT face=宋体 size=4>ISurface，IsurfaceComposer：AIDL调用接口实例</FONT></P>
+        <P><FONT face=宋体 size=4>mLayerMap：服务端的Surface的管理对象。</FONT></P>
+        <P><FONT face=宋体 size=4>mCurrentState.layersSortedByZ 
+        ：以Surface的Z-order序列排列的Layer数组。</FONT></P>
+        <P><FONT face=宋体 size=4>graphicPlane 缓冲区输出管理</FONT></P>
+        <P><FONT face=宋体 size=4>OpenGL ES：图形计算，图像合成等图形库。</FONT></P>
+        <P><FONT face=宋体 size=4>gralloc.xxx.so这是个跟平台相关的图形缓冲区管理器。</FONT></P>
+        <P><FONT face=宋体 size=4>pmem 
+        Device：提供共享内存，在这里只是在gralloc.xxx.so可见，在上层被gralloc.xxx.so抽象了。</FONT></P></BLOCKQUOTE>
+      <H3 align=center>2 SurfaceFinger Client和服务端对象关系图</H3>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=672 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/1104010630414011.png" 
+      width=964 border=0></FONT></A><FONT face=宋体 size=4> </FONT></P>
+      <P><FONT face=宋体 size=4>Client端与SurfaceFlinger连接图：</FONT></P>
+      <P align=center><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: inline; BORDER-LEFT-WIDTH: 0px; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      height=231 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041402.png" 
+      width=679 border=0></FONT><FONT face=宋体 size=4>&nbsp;</FONT></P>
+      <P align=left><FONT face=宋体 
+      size=4>Client对象：一般的在客户端都是通过SurfaceComposerClient来跟SurfaceFlinger打交道。</FONT></P>
+      <P align=center><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: inline; BORDER-LEFT-WIDTH: 0px; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      height=571 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041403.png" 
+      width=559 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <P align=center><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: inline; BORDER-LEFT-WIDTH: 0px; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      height=319 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041404.png" 
+      width=657 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <H3 align=center>3 主要对象说明</H3>
+      <H4>3.1 DisplayHardware &amp;FrameBuffer</H4>
+      <P><FONT face=宋体 size=4>&nbsp;&nbsp;&nbsp; 
+      首先SurfaceFlinger需要操作到屏幕，需要建立一个屏幕硬件缓冲区管理框架。<A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>在设计支持时，考虑多个屏幕的情况，引入了graphicPlane的概念。在SurfaceFlinger上有一个graphicPlane数组，每一个graphicPlane对象都对应一个DisplayHardware.在当前的Android（2.1）版本的设计中，系统支持一个graphicPlane，所以也就支持一个DisplayHardware。</FONT></P>
+      <P><FONT face=宋体 size=4>SurfaceFlinger，Hardware硬件缓冲区的数据结构关系图。</FONT></P>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=611 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041405.png" 
+      width=709 border=0></FONT></P>
+      <P><FONT face=宋体 size=4></FONT></P>
+      <H4>3.2 Layer</H4>
+      <P><FONT face=宋体 size=4></FONT></P>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=187 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041406.png" 
+      width=523 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 size=4>method:setBuffer&nbsp; 
+        在SurfaceFlinger端建立显示缓冲区。这里的缓冲区是指的HW性质的，PMEM设备文件映射的内存。</FONT></P></BLOCKQUOTE>
+      <P><FONT face=宋体 size=4>1) layer的绘制</FONT></P>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 size=4>void Layer::onDraw(const Region&amp; clip) 
+        const</FONT></P>
+        <P><FONT face=宋体 size=4>{</FONT></P>
+        <P><FONT face=宋体 size=4>&nbsp;&nbsp;&nbsp; int index = 
+        mFrontBufferIndex;</FONT></P>
+        <P><FONT face=宋体 size=4>&nbsp;&nbsp;&nbsp; GLuint textureName = 
+        mTextures[index].name;</FONT></P>
+        <P><FONT face=宋体 size=4>…</FONT></P>
+        <P><FONT face=宋体 size=4>&nbsp; drawWithOpenGL(clip, 
+        mTextures[index]);</FONT></P>
+        <P><FONT face=宋体 size=4>}</FONT></P></BLOCKQUOTE>
+      <H4>3.2 mCurrentState.layersSortedByZ</H4>
+      <P><FONT face=宋体 size=4>&nbsp;&nbsp; 
+      以Surface的Z-order序列排列的LayerBase数组，该数组是层显示遮挡的依据。在每个层计算自己的可见区域时，从Z-order 
+      顶层开始计算，是考虑到遮挡区域的裁减，自己之前层的可见区域就是自己的不可见区域。而绘制Layer时，则从Z-order底层开始绘制，这个考虑到透明层的叠加。</FONT></P>
+      <P><FONT face=宋体 size=4></FONT></P>
+      <H3 align=center>4 SurfaceFlinger的运行框架</H3>
+      <P><FONT face=宋体 size=4>&nbsp;&nbsp;&nbsp; 我们从前面的章节&lt;<A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A> 
+      Service&gt;的基本原理可以知道，SurfaceFlinger的运行框架存在于：threadLoop,他是SurfaceFlinger的主循环体。</FONT><FONT 
+      face=宋体 
+      size=4>SurfaceFlinger在进入主体循环之前会首先运行：SurfaceFlinger::readyToRun()。</FONT></P>
+      <H4>4.1 SurfaceFlinger::readyToRun()</H4>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 size=4>（1）建立GraphicPanle</FONT></P>
+        <P><FONT face=宋体 size=4>（2）建立FrameBufferHardware(确定输出目标)</FONT></P>
+        <P><FONT face=宋体 size=4>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 初始化：OpenGL 
+        ES</FONT></P>
+        <P><FONT face=宋体 
+        size=4>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        建立兼容的mainSurface.利用eglCreateWindowSurface。</FONT> </P>
+        <P><FONT face=宋体 
+        size=4>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        建立OpenGL ES进程上下文。</FONT></P>
+        <P><FONT face=宋体 size=4>&nbsp;&nbsp; 建立主Surface（OpenGL ES）。 
+        DisplayHardware的Init()@DisplayHardware.cpp函数对OpenGL做了初始化，并创建立主Surface。为什么叫主Surface，因为所有的Layer在绘制时，都需要先绘制在这个主Surface上，最后系统才将主Surface的内容”投掷”到真正的屏幕上。</FONT></P>
+        <P><FONT face=宋体 size=4>（3） 主Surface的绑定</FONT></P></BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 
+        size=4>1）在DisplayHandware初始完毕后，hw.makeCurrent()将主Surface，OpenGL 
+        ES进程上下文绑定到SurfaceFlinger的上下文中，</FONT></P>
+        <P><FONT face=宋体 
+        size=4>2）之后所有的SurfaceFlinger进程中使用EGL的所有的操作目的地都是mSurface@DisplayHardware。</FONT></P></BLOCKQUOTE>
+      <P><FONT face=宋体 
+      size=4>这样，在OpenGL绘制图形时，主Surface被记录在进程的上下文中，所以看不到显示的主Surfce相关参数的传递。下面是Layer-Draw，Hardware.flip的动作示意图：</FONT></P>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=173 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041407.png" 
+      width=587 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <H4>4.2 ThreadLoop</H4>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=345 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041408.png" 
+      width=299 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <P><FONT face=宋体 
+      size=4>(1)handleTransaction(…):主要计算每个Layer有无属性修改，如果有修改着内用需要重画。</FONT></P>
+      <P><FONT face=宋体 size=4>(2)handlePageFlip()</FONT></P>
+      <P><FONT face=宋体 size=4>&nbsp;&nbsp;&nbsp; 
+      computeVisibleRegions：根据Z-Order序列计算每个Layer的可见区域和被覆盖区域。裁剪输出范围计算-</FONT></P>
+      <P><FONT face=宋体 
+      size=4>在生成裁剪区域的时候，根据Z_order依次，每个Layer在计算自己在屏幕的可显示区域时，需要经历如下步骤：</FONT></P>
+      <P><FONT face=宋体 size=4>&nbsp; 1）以自己的W,H给出自己初始的可见区域</FONT></P>
+      <P><FONT face=宋体 size=4>&nbsp; 2）减去自己上面窗口所覆盖的区域</FONT></P>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=397 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/110401063041409.png" 
+      width=785 border=0></FONT><FONT face=宋体 size=4> </FONT></P>
+      <P><FONT face=宋体 size=4>在绘制时，Layer将根据自己的可将区域做相应的区域数据Copy。</FONT></P>
+      <P><FONT face=宋体 size=4>（3）handleRepaint() </FONT></P>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 size=4>composeSurfaces（需要刷新区域）：</FONT></P></BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 
+        size=4>根据每个Layer的可见区域与需要刷新区域的交集区域从Z-Order序列从底部开始绘制到主Surface上。</FONT></P></BLOCKQUOTE>
+      <P><FONT face=宋体 size=4>（4）postFramebuffer()</FONT></P>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 
+        size=4>（DisplayHardware）hw.flip(mInvalidRegion);</FONT></P></BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><FONT face=宋体 size=4>eglSwapBuffers(display,mSurface) 
+        :将mSruface投递到屏幕。</FONT></P></BLOCKQUOTE>
+      <H2 align=center>5 总结</H2>
+      <P><FONT face=宋体 size=4>现在SurfaceFlinger干的事情利用下面的示意图表示出来：</FONT></P>
+      <P><FONT face=宋体 color=#000000 size=4><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=377 alt=image 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/1104010630414010.png" 
+      width=709 border=0></FONT></P></DIV>
+      <DIV class=pager style="TEXT-ALIGN: center"><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">上一页</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966.htm">1</A> <A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p24.htm">..24</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">25</A><SPAN 
+      class=p_current>26</SPAN><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p27.htm">27</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">28</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p27.htm">下一页</A>&nbsp; 
+      <INPUT id=goPage value=27><A href="javascript:pager.Jump();">GO</A>
+      <SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/pager.js" 
+      type=text/javascript></SCRIPT>
+
+      <SCRIPT type=text/javascript>var pager=new iwmsPager(26,28,true);</SCRIPT>
+      </DIV>
+      <TABLE id=dlPages style="CLEAR: both" cellSpacing=0 width="95%" 
+      align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=2 height=20>【内容导航】</TD></TR>
+        <TR>
+          <TD width="50%" height=20>第1页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966.htm">分析方法论探讨之设计意图</A> 
+          </TD>
+          <TD width="50%" height=20>第2页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p2.htm">方法论探讨之概念空间篇 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第3页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p3.htm">手机硬件形态</A> 
+          </TD>
+          <TD width="50%" height=20>第4页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p4.htm">手机的软件形态</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第5页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p5.htm">基本空间划分</A> 
+          </TD>
+          <TD width="50%" height=20>第6页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p6.htm">IPC框架分析 
+            Binder，Service，Service manager</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第7页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p7.htm">Service深入分析</A> 
+          </TD>
+          <TD width="50%" height=20>第8页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p8.htm">Android 
+            启动过程详解</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第9页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p9.htm">Zygote 
+            Service</A> </TD>
+          <TD width="50%" height=20>第10页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p10.htm">Android 
+            GWES基本框架篇</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第11页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p11.htm">Android 
+            GWES之Android消息系统</A> </TD>
+          <TD width="50%" height=20>第12页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p12.htm">Android 
+            GWES之窗口管理之基本构架原理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第13页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p13.htm">Android 
+            GWES之Android窗口管理</A> </TD>
+          <TD width="50%" height=20>第14页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p14.htm">Android输入系统</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第15页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p15.htm">Android用户事件输入路径</A> 
+          </TD>
+          <TD width="50%" height=20>第16页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p16.htm">Android电话系统之概述篇</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第17页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p17.htm">Android电话系统之-rild</A> 
+          </TD>
+          <TD width="50%" height=20>第18页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p18.htm">Android电话系统之RIL-Java</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第19页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p19.htm">Android电话系统之GSMCallTracker</A> 
+          </TD>
+          <TD width="50%" height=20>第20页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p20.htm">Android应用程序框架之无边界设计理念</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第21页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p21.htm">Android应用框架之AndroidApplication 
+            </A></TD>
+          <TD width="50%" height=20>第22页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p22.htm">Android应用框架之Activity 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第23页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p23.htm">Andoird 
+            GDI之基本原理及其总体框架</A> </TD>
+          <TD width="50%" height=20>第24页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p24.htm">Android 
+            GDI之显示缓冲管理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第25页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">Androird 
+            GDI之共享缓冲区机制</A> </TD>
+          <TD width="50%" height=20>第26页：<A class=highlight 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p26.htm">Android 
+            GDI之SurfaceFlinger</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第27页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p27.htm">SurfaceFlinger对象建立过程示意</A> 
+          </TD>
+          <TD width="50%" height=20>第28页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">Android 
+            GDI之Surface&amp;Canvas</A> </TD></TR></TBODY></TABLE></DIV><BR>
+      <DIV align=center>
+      <SCRIPT language=javascript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/wangzhai.js"></SCRIPT>
+
+      <DIV class=linuc>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux3.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux8.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></DIV><BR>
+      <DIV style="CLEAR: both; PADDING-LEFT: 20px">上一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33964.htm">Linux设备驱动程序学习</A><BR>下一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33967.htm">Linux Shell 
+      循环计数</A><BR>
+      <DIV align=center>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关资讯</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      href="http://www.linuxidc.com/search.aspx?Where=Nkey&amp;Keyword=Android" 
+      target=_blank>Android</A>&nbsp; </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <TABLE width="100%">
+        <TBODY>
+        <TR>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11309.htm" 
+              target=_blank>Google用Linux的Android打开IC开源大门</A>&nbsp; <SPAN 
+              class=gray>(02/25/2008 06:47:24)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11157.htm" 
+              target=_blank>Gphone手机终于来了!下半年将上市(图)</A>&nbsp; <SPAN 
+              class=gray>(02/14/2008 20:34:03)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2007-12/10010.htm" 
+              target=_blank>自己编译Google Android内核的Linux源码</A>&nbsp; <SPAN 
+              class=gray>(12/24/2007 12:02:34)</SPAN> </LI></UL></TD>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11226.htm" 
+              target=_blank>评论：Google手机是否遭遇成长的烦恼？</A>&nbsp; <SPAN 
+              class=gray>(02/19/2008 12:02:35)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-01/10265.htm" 
+              target=_blank>2008年：“云雾计算”正向我们迎面走来</A>&nbsp; <SPAN 
+              class=gray>(01/01/2008 18:57:09)</SPAN> 
+              <LI><A title="Google手机今天发布明年上市 使用Linux操作系统" 
+              href="http://www.linuxidc.com/Linux/2007-11/8792.htm" 
+              target=_blank>Google手机今天发布明年上市 使用Linux操作</A>&nbsp; <SPAN 
+              class=gray>(11/05/2007 06:46:47)</SPAN> 
+      </LI></UL></TD></TR></TBODY></TABLE></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关图片</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <DIV class=imgList>
+      <UL>
+        <LI style="WIDTH: 25%"><A title="Android 视频缩略图之 MediaStore" 
+        href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank><IMG height=90 alt="Android 视频缩略图之 MediaStore" 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111207070383461t.jpg" 
+        width=120>Android 视频缩略图之</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android 事务操作和数据显示" 
+        href="http://www.linuxidc.com/Linux/2011-12/48806.htm" 
+        target=_blank><IMG height=90 alt="Android 事务操作和数据显示" 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111206093397431t.jpg" 
+        width=120>Android 事务操作和数</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android第一个应用程序helloworld项目详解 
+        href="http://www.linuxidc.com/Linux/2011-12/48804.htm" 
+        target=_blank><IMG height=90 alt=Android第一个应用程序helloworld项目详解 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111206092952291t.jpg" 
+        width=120>Android第一个应用程</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android应用开发之开发环境搭建 
+        href="http://www.linuxidc.com/Linux/2011-12/48803.htm" 
+        target=_blank><IMG height=90 alt=Android应用开发之开发环境搭建 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111206092691795t.jpg" 
+        width=120>Android应用开发之开</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        title="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        href="http://www.linuxidc.com/Linux/2011-12/48802.htm" 
+        target=_blank><IMG height=90 
+        alt="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/11120609225871t.jpg" 
+        width=120>Android修改Eclipse </A></LI>
+        <LI style="WIDTH: 25%"><A title=Android与JavaScript相互调用 
+        href="http://www.linuxidc.com/Linux/2011-12/48801.htm" 
+        target=_blank><IMG height=90 alt=Android与JavaScript相互调用 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111206092021191t.jpg" 
+        width=120>Android与JavaScript</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        href="http://www.linuxidc.com/Linux/2011-12/48800.htm" 
+        target=_blank><IMG height=90 alt=Android之帧动画实现 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111206091880021t.jpg" 
+        width=120>Android之帧动画实现</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android Activity 和 HTML 数据通信" 
+        href="http://www.linuxidc.com/Linux/2011-12/48794.htm" 
+        target=_blank><IMG height=90 alt="Android Activity 和 HTML 数据通信" 
+        src="Android GDI之SurfaceFlinger_Android核心分析_files/111206091188453t.jpg" 
+        width=120>Android Activity 和 </A></LI></UL></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本文评论</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      style="CURSOR: hand" href="http://www.linuxidc.com/remark.aspx?id=33966" 
+      target=_blank>全部评论</A> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>&nbsp;<IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face1.gif"> sss &nbsp; 
+      <SPAN class=gray>(33 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face1.gif"> ee &nbsp; 
+      <SPAN class=gray>(ww ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face1.gif"> 222222222 
+      &nbsp; <SPAN class=gray>(3333333 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face1.gif"> 111 &nbsp; 
+      <SPAN class=gray>(222 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face1.gif"> dfdf &nbsp; 
+      <SPAN class=gray>(zfds ,11月02日 )</SPAN><BR></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>发表评论</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <FORM id=remarkForm 
+      style="PADDING-RIGHT: 5px; PADDING-LEFT: 5px; PADDING-BOTTOM: 5px; PADDING-TOP: 5px" 
+      onsubmit="return checkRemark();" action=../../remark.aspx?id=33966 
+      method=post>
+      <SCRIPT language=javascript type=text/javascript>
+			function checkRemark()
+			{
+			var form=document.getElementById("remarkForm");
+			var remarkSize = 1000;
+			if (form.body.value=="")
+			{	alert("请填写评论内容");
+				form.body.focus();
+				return false;
+			}
+			if (form.username.value=="")
+			{	alert("请填写姓名");
+				form.username.focus();
+				return false;
+			}
+			if (form.body.value.length>remarkSize)
+			{	form.body.value = form.body.value.substr(0,remarkSize);
+				showLen(form.body);
+				form.body.focus();
+				alert("评论内容不可以超过"+remarkSize+"字,已帮你删除多余部分");
+				return false;
+			}
+			if (form.username.value.length>10)
+			{	alert("姓名不可以超过10个字");
+				form.username.focus();
+				return false;
+			}
+			form.submit.disabled=true;
+			form.vcode.value = VCode("Android核心分析");
+			return true;
+			}
+			function showLen(obj)
+			{
+				document.getElementById("bodyLen").value=obj.value.length;
+			}
+			</SCRIPT>
+      <INPUT type=radio CHECKED value=1 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face1.gif"><INPUT 
+      type=radio value=2 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face2.gif"><INPUT 
+      type=radio value=3 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face3.gif"><INPUT 
+      type=radio value=4 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face4.gif"><INPUT 
+      type=radio value=5 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face5.gif"><INPUT 
+      type=radio value=6 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face6.gif"><INPUT 
+      type=radio value=7 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face7.gif"><INPUT 
+      type=radio value=8 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face8.gif"><INPUT 
+      type=radio value=9 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face9.gif"><INPUT 
+      type=radio value=10 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face10.gif"><INPUT 
+      type=radio value=11 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face11.gif"><INPUT 
+      type=radio value=12 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face12.gif"><INPUT 
+      type=radio value=13 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face13.gif"><INPUT 
+      type=radio value=14 name=face><IMG alt="" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/face14.gif"> 
+      <BR>请您注意：<BR>遵守国家有关法律、法规，尊重网上道德，承担一切因您的行为而直接或间接引起的法律责任。<BR>LinuxIDC.com拥有管理笔名和留言的一切权利。<BR>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux11.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <DIV style="PADDING-TOP: 5px">点评： <TEXTAREA onkeydown=showLen(this) onkeyup=showLen(this) name=body rows=12 cols=78></TEXTAREA> 
+      字数<INPUT id=bodyLen 
+      style="BORDER-TOP-WIDTH: 0px; BORDER-LEFT-WIDTH: 0px; BACKGROUND: none transparent scroll repeat 0% 0%; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      readOnly size=3> </DIV>
+      <DIV style="PADDING-TOP: 5px">姓名： <INPUT id=i_username maxLength=15 
+      size=10 name=username> <INPUT id=i_submit type=submit value=" 发 表 " name=submit> </DIV>
+      <SCRIPT type=text/javascript>
+			var remarkmember = false;
+			var allowremark = true;
+			if (remarkmember){
+				document.getElementById("i_username").readonly=true;
+				document.write("(限会员登录后发表评论)");
+			}
+			if (!allowremark){
+				document.getElementById("i_submit").disabled=true;
+			}
+			</SCRIPT>
+
+      <SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/clientDate.js" 
+      type=text/javascript></SCRIPT>
+      <INPUT type=hidden name=vcode> </FORM></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV><IFRAME 
+      style="VISIBILITY: hidden; WIDTH: 0px; HEIGHT: 0px" 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/CAW9ARC1.htm"></IFRAME></TD>
+    <TD class=linuz vAlign=top>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linuxgif.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>最新资讯</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48852.htm" 
+        target=_blank>不满AMD介入 英特尔拒将Android移植到PC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank>Android 视频缩略图之 MediaStore</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48850.htm" 
+        target=_blank>深度探索Android应用程序的基本原理</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48849.htm" 
+        target=_blank>Linux内核（v0.11）-从开机加电执行到main函数前</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48848.htm" 
+        target=_blank>notepad NppFTP插件连接Linux(此处为Debian)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48847.htm" 
+        target=_blank>mini6410 实现简单 adc驱动--友善版</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48846.htm" 
+        target=_blank>Apache ActiveMQ故障转移机制远程拒绝服务漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48845.htm" 
+        target=_blank>PHP “exif_process_IFD_TAG()”远程整数溢出漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48844.htm" 
+        target=_blank>ProFTPD响应池释放后重用代码执行漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48843.htm" 
+        target=_blank>Mozilla Firefox CSS “:visited”信息泄露漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48842.htm" 
+        target=_blank>解决Gentoo各种问题</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48841.htm" 
+        target=_blank>利用Ubuntu启动U盘安装DOS和WindowsXP</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48840.htm" 
+        target=_blank>利用Linux启动盘切换安装两个盘符一样的Windows</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48839.htm" 
+        target=_blank>利用Ubuntu的分区工具备份与恢复WindowsXP系统分区</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48838.htm" 
+        target=_blank>新的GNOME 3通知设计</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48837.htm" 
+        target=_blank>深度Linux为何是Ubuntu大树上的一支嫩枝芽?</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48836.htm" 
+        target=_blank>Lime诞生 U盘上免费体验Chrome OS</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48835.htm" 
+        target=_blank>Linux 下10款终端音乐播放器</A> 
+        <LI><A 
+        title="编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解决编译C++程序时链接MongoDB动态库失败的问题" 
+        href="http://www.linuxidc.com/Linux/2011-12/48834.htm" 
+        target=_blank>编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48833.htm" 
+        target=_blank>Ubuntu下安装MongoDB全程图解</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=linuzb>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux16.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="Android GDI之SurfaceFlinger_Android核心分析_files/linux18.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本周热门</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2007-06/4767.htm" 
+        target=_blank>Linux shell脚本全面学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/33966.htm" 
+        target=_blank>Android核心分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-02/24667.htm" 
+        target=_blank>详细易懂的Linux makefile 教程</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39271.htm" 
+        target=_blank>Android Binder设计与实现 – 设计篇</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9623.htm" 
+        target=_blank>Linux内核的ioctl函数学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40508.htm" 
+        target=_blank>技术内幕：Android的IPC机制-Binder</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35982.htm" 
+        target=_blank>u-boot-2009.08在mini2440上的移植</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33600.htm" 
+        target=_blank>S3C2440上LCD驱动(FrameBuffer)实例开发讲解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35392.htm" 
+        target=_blank>Android之PopupWindow弹出对话框</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/41159.htm" 
+        target=_blank>Android控件Gallery 3D效果</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/34541.htm" 
+        target=_blank>Android驱动例子（LED灯控制）</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-08/27880.htm" 
+        target=_blank>Android C/C++ 开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2009-01/18242.htm" 
+        target=_blank>在Linux下安装GCC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-04/25638.htm" 
+        target=_blank>Java删除文件</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39270.htm" 
+        target=_blank>Android深入浅出之Binder机制</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33022.htm" 
+        target=_blank>基于Linux的v4l2视频架构驱动编写</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40495.htm" 
+        target=_blank>Android Bundle类</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-02/32396.htm" 
+        target=_blank>Android RIL 调试分析全记录</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38977.htm" 
+        target=_blank>在Ubuntu上为Android系统编写Linux内核驱动程序</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31291.htm" 
+        target=_blank>Linux Platform驱动程序框架解析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31385.htm" 
+        target=_blank>Android开发入门——Socket编程</A> 
+        <LI><A title="嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发讲解" 
+        href="http://www.linuxidc.com/Linux/2011-02/32646.htm" 
+        target=_blank>嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33086.htm" 
+        target=_blank>Linux下SPI驱动分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38866.htm" 
+        target=_blank>百度地图API之根据经纬度查询地址信息(Android)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9546.htm" 
+        target=_blank>在Windows平台下使用安装GCC(图)</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV></TD></TR></TBODY></TABLE>
+<DIV id=footer><BR>
+<P align=center><A href="http://www.linuxidc.com/aboutus.htm">Linux公社简介</A> - <A 
+href="http://www.linuxidc.com/adsense.htm">广告服务</A> - <A 
+href="http://www.linuxidc.com/sitemap.aspx">网站地图</A> - <A 
+href="http://www.linuxidc.com/help.htm">帮助信息</A> - <A 
+href="http://www.linuxidc.com/contactus.htm">联系我们</A><BR>本站（LinuxIDC）所刊载文章不代表同意其说法或描述，仅为提供更多信息，也不构成任何建议。<BR>
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/qq.js" 
+type=text/javascript></SCRIPT>
+<BR>
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/foot.js" 
+type=text/javascript></SCRIPT>
+<BR>Copyright © 2006-2011　<A href="http://www.linuxidc.com/">Linux公社</A>　All 
+rights reserved 浙ICP备06018118号</P>
+<DIV class=menuskin id=popmenu 
+onmouseover="clearhidemenu();highlightmenu(event,'on')" style="Z-INDEX: 100" 
+onmouseout="highlightmenu(event,'off');dynamichide(event)"></DIV>
+<SCRIPT src="Android GDI之SurfaceFlinger_Android核心分析_files/menu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+
+<SCRIPT type=text/javascript>
+	jsdone=true;
+	</SCRIPT>
+</DIV></DIV>
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/linuxren1.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/linuxren2.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="Android GDI之SurfaceFlinger_Android核心分析_files/linuxren3.js" 
+type=text/javascript></SCRIPT>
+</BODY></HTML>

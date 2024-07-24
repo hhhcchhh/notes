@@ -1,0 +1,909 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<!-- saved from url=(0050)http://www.linuxidc.com/Linux/2011-04/33966p24.htm -->
+<HTML lang=utf-8 xmlns="http://www.w3.org/1999/xhtml"><HEAD><TITLE>Android GDI之显示缓冲管理_Android核心分析</TITLE>
+<META http-equiv=content-type content=text/html;charset=utf-8><LINK 
+href="favicon.ico" type=image/x-icon rel=icon><LINK href="favicon.ico" 
+type=image/x-icon rel="shortcut icon">
+<META 
+content="作为一个从其他平台装接过来的程序员，要从事Andoid平台系统开发，我的关于手机平台上积累的知识已经不能满足需要了，Android为我们带来了大量的新名词，Activity，Manifest，INTENT，Service，Binder，Dalvik虚拟机，Framework，Linux，Navtive ，JNI.....。通过在源代码，在开发社区，在开发博客，甚至在招聘过程中，我不断的寻求Android是什么。经过一定时间的沉淀，我慢慢的理解到Android不仅仅是一类手机的总称，不仅仅是一个手机开发平台，不仅仅是一个虚拟java操作系统，不仅仅是一个开发社区，一个开发标准，不仅仅是一堆代码，Android已经成了一个新的潮流。" 
+name=description>
+<META content=Linux,ubuntu,Fedora,红旗Linux,suse,SQL,PHP,mysql,apache,Linux公社 
+name=keywords>
+<META content="MSHTML 6.00.2900.6169" name=GENERATOR>
+<META content=Linux name=generator><LINK 
+href="Android GDI之显示缓冲管理_Android核心分析_files/style.css" type=text/css 
+rel=stylesheet>
+<SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/head.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT type=text/javascript>
+var imgMaxWidth=600;
+var urlPrefix="../../";
+</SCRIPT>
+
+<SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/show.js" 
+type=text/javascript></SCRIPT>
+</HEAD>
+<BODY>
+<DIV class=twidth>
+<DIV id=sitehead>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<TABLE width="100%">
+  <TBODY>
+  <TR align=middle>
+    <TD width=160><A href="http://www.linuxidc.com/"><IMG 
+      style="FILTER: chroma(color=#FFFFFF)" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/logo.jpg" border=0></A> </TD>
+    <TD>
+      <DIV align=center>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></TD>
+    <TD style="LINE-HEIGHT: 120%" width=100><A 
+      onclick="javascript:window.external.addFavorite('http://www.linuxidc.com/','Linux公社-Linux|Ubuntu|Fedora|新闻|下载|教程|安装|SUSE|Linux发行版|编程|服务器')" 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p24.htm#">加入收藏</A><BR><A 
+      href="http://www.linuxidc.com/sitemap.aspx">网站地图</A><BR><A 
+      href="http://www.linuxidc.com/search.aspx">网站搜索</A><BR>
+      <SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/language.js" 
+      type=text/javascript></SCRIPT>
+    </TD></TR></TBODY></TABLE></DIV></DIV>
+<DIV id=navbar>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/popmenu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+<A class=first href="http://www.linuxidc.com/index.htm">首页</A><A 
+href="http://www.linuxidc.com/it/index.htm">Linux新闻</A><A 
+href="http://www.linuxidc.com/Linuxit/index.htm">Linux技术交流</A><A 
+href="http://www.linuxidc.com/MySql/index.htm">数据库技术</A><A class=thisclass 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A><A 
+href="http://www.linuxidc.com/Apache/index.htm">服务器应用</A><A 
+href="http://www.linuxidc.com/Unix/index.htm">Linux网络安全</A><A 
+href="http://www.linuxidc.com/download/index.htm">Linux下载</A><A 
+href="http://www.linuxidc.com/Linuxrz/index.htm">Linux认证</A><A 
+href="http://www.linuxidc.com/theme/index.htm">Linux主题</A><A 
+href="http://www.linuxidc.com/Linuxwallpaper/index.htm">Linux壁纸</A><A 
+href="http://www.linuxidc.com/digi/index.htm">数码</A><A 
+href="http://www.linuxidc.com/mobile/index.htm">手机</A><A 
+href="http://www.linuxidc.com/nbook/index.htm">笔记本</A> </DIV></DIV>
+<DIV id=navsub>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m><A href="http://www.linuxidc.com/index.htm">首页</A> → <A 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A> </DIV></DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript src="Android GDI之显示缓冲管理_Android核心分析_files/linux1.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript src="Android GDI之显示缓冲管理_Android核心分析_files/linuxa.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<TABLE id=middle style="TABLE-LAYOUT: fixed" cellSpacing=0 cellPadding=0 
+width="100%">
+  <TBODY>
+  <TR>
+    <TD vAlign=top>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>阅读内容</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm id=bodyTd>
+      <DIV id=printBody style="WORD-BREAK: break-all"><BR>
+      <DIV align=center>
+      <H1 class=aTitle>Android核心分析</H1></DIV>
+      <DIV align=center>
+      <H2 class=subTitle>Android GDI之显示缓冲管理</H2></DIV>
+      <TABLE width="97%" align=center>
+        <TBODY>
+        <TR>
+          <TD width=120>[日期：2011-04-01]</TD>
+          <TD align=middle>来源：Linux社区&nbsp; 作者：maxleng</TD></TR></TBODY></TABLE>
+      <DIV class=linua>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux2.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linub>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux19.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV id=content>
+      <H3><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A> 
+      GDI之屏幕设备管理-动态链接库</H3>
+      <P>&nbsp;&nbsp;&nbsp;&nbsp; <SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp; 
+      万丈高楼从地起，从最根源的硬件帧缓冲区开始。我们知道显示FrameBuffer在系统中就是一段内存,GDI的工作就是把需要输出的内容放入到该段内存的某个位置。我们从基本的点（像素点）和基本的缓冲区操作开始。</SPAN><!--IWMS_AD_BEGIN-->
+      <TABLE width="97%" align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=3>
+            <DIV align=center>
+            <SCRIPT language=javaScript 
+            src="Android GDI之显示缓冲管理_Android核心分析_files/system60.js" 
+            type=text/javascript></SCRIPT>
+            </DIV></TD></TR></TBODY></TABLE><!--IWMS_AD_END--></P>
+      <H2>1 基本知识</H2>
+      <H3>1.1点的格式</H3>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp; 
+      对于不同的LCD来讲，FrameBuffer的二进制格式不一样，并且可以分为两部分：</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp; 
+      </SPAN></P>
+      <H4>&nbsp;&nbsp; 1)点的格式：通常将Depth,即表示多少位表示一个点<SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><FONT 
+      size=3>。</FONT></SPAN></H4>
+      <BLOCKQUOTE>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">1位表示一个点</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">2位表示一个点</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">16位表示一个点</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">32位表示一个点（Alpha通道）</SPAN></P></BLOCKQUOTE>
+      <H4>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2) 点内格式：RGB分量分布表示。</H4>
+      <BLOCKQUOTE>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">例如对于我们常见的16位表示一个点</SPAN></P></BLOCKQUOTE>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=342 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931351.png" width=563 
+      border=0></SPAN></P>
+      <H3>1.2．格式之间的转换</H3>
+      <BLOCKQUOTE>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">所以屏幕输出实际上是一个值映射的关系。我们可以有如下的点格式转换，</SPAN></P></BLOCKQUOTE>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=296 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931352.png" width=365 
+      border=0></SPAN><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"> 
+      </SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">源格式可能来自单色位图和彩色位图，对于具体的目标机来讲，我们的目标格式可能就是一种，例如16位（5/6/5）格式。其实就只存在一种格式的转换，即从目标格式都是16位格式。</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=251 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931353.png" width=388 
+      border=0></SPAN><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"> 
+      </SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">但是，在设计GDI时，基本要求有一个可移植性好，所以我们还是必须考虑对于不同点格式LCD之间的转换操作。所以在GDI的驱动程序中涉及到如下几类主要操作:</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">区域操作(Blit)：我们在显示缓冲区上做的最多的操作就是区块搬运。由此，很多的应用处理器使用了硬件图形加速器来完成区域搬运:blit.</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">从我们的主要操作的对象来看,可以分为两个方向:</SPAN></P>
+      <BLOCKQUOTE>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">1)内存区域到屏幕区域</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">2)屏幕区域到屏幕区域</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">3)屏幕区域到内存区域</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">4)内存区域到内存区域</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">在这里我们需要特别提出的是，由于在Linux不同进程之间的内存不能自由的访问，使得我们的每个<A 
+        title=Android 
+        href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>应用对于内存区域和屏幕缓冲区的使用变得很复杂。在Android的设计中，在屏幕缓冲区和显示内存缓冲区的管理分类很多的层次，最上层的对象是可以在进程间自由传递，但是对于缓冲区内容则使用共享内存的机制。</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">基于以上的基础知识，我们可以知道：</SPAN></P></BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">（1）代码中Config及其Format的意义所在了。也就理解了兼容性的意义：采用同硬件相同的点的描述对象</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">（2）所有屏幕上图形的移动都是显示缓冲区搬运的结果。</SPAN></P></BLOCKQUOTE>
+      <H3>1.2图形加速器</H3>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+      应用处理器都可能带有图形加速器，对于不同的应用处理器对其图形加速器可能有不同的处理方式，对于2D加速来讲，都可归结为Blit。多为数据的搬运，放大缩小，旋转等。</SPAN></P>
+      <H2>2 <A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>的缓冲区抽象定义</H2>
+      <H3>&nbsp;</H3>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+      不同的硬件有不同的硬件图形加速设备和缓冲内存实现方法。<A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A> 
+      Gralloc动态库抽象的任务就是消除不同的设备之间的差别，在上层看来都是同样的方法和对象。在Moudle层隐藏缓冲区操作细节。Android使用了动态链接库gralloc.xxx.so，来完成底层细节的封装。</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">2.1 
+      本地定义@hardware\libhandware\modules\gralloc</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">每个动态链接库都是用相同名称的调用接口：</SPAN></P>
+      <BLOCKQUOTE>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">1)硬件图形加速器的抽象：BlitEngine，CopyBit的加速操作。</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">2)硬件FrameBuffer内存管理</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">3)共享缓存管理 
+      </SPAN></P></BLOCKQUOTE>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">从数据关系上我们来考察..动态链接库的抽象行为：</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">在层次：</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">Hardware.c@hardware\libhardware</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体"> 
+      中对动态链接库中的内容作了全新的包装。</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">/system/lib/hw/gralloc.xxx.so动态库文件。从文件Gralloc.h(handware\libhardware\include\hardware)是抽象的结果：hw_get_module从gralloc.xxx.so提取了HAL_MODULE_INFO_SYM（SYM变量）</SPAN></P>
+      <P align=center><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><IMG 
+      title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: inline; BORDER-LEFT-WIDTH: 0px; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      height=344 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931354.png" width=715 
+      border=0></SPAN><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"> 
+      </SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">从展露在外部的数据结构，</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">我们在@Gralloc.cpp</SPAN><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">看到到了这样的布局：</SPAN></P>
+      <BLOCKQUOTE>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">static struct 
+        hw_module_methods_t gralloc_module_methods = {</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">open: 
+        gralloc_device_open</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">};</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">struct 
+        private_module_t HAL_MODULE_INFO_SYM = {</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+        base: {</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        common: {</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        tag: HARDWARE_MODULE_TAG,</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        …</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        id: GRALLOC_HARDWARE_MODULE_ID,</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        name: "Graphics Memory Allocator Module",</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        author: "The <A title=Android 
+        href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A> Open 
+        Source Project",</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        methods: &amp;gralloc_module_methods</SPAN></P>
+        <P><SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        },</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">registerBuffer: 
+        gralloc_register_buffer,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">unregisterBuffer: 
+        gralloc_unregister_buffer,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">lock:&nbsp; 
+        gralloc_lock,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">unlock:&nbsp; 
+        gralloc_unlock,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+        },</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+        framebuffer: 0,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+        flags: 0,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+        numBuffers: 0,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp; 
+        bufferMask: 0,</SPAN></P>
+        <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">…</SPAN></P>
+        <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">};</SPAN></P></BLOCKQUOTE>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">我们建立了什么对象来支撑缓冲区的操作？</SPAN></P>
+      <BLOCKQUOTE>
+        <P>buffer_handle_t：外部接口。</P>
+        <P>methods.<SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">open，<SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">registerBuffer，<SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">unregisterBuffer，<SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">lock，<SPAN 
+        style="FONT-SIZE: medium; FONT-FAMILY: 宋体">unlock</SPAN></SPAN></SPAN></SPAN></SPAN></P></BLOCKQUOTE>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">下面是外部接口和内部对象的结构关系，该类型的结构充分利用C 
+      Struct的数据排列特性：基本结构体放置在最前面，本地私有放置在后面，满足了抽象的需要。</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">typedef const 
+      native_handle* buffer_handle_t;</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">private_module_t&nbsp; 
+      HAL_MODULE_INFO_SYM 向往暴露的动态链接库接口，通过该接口，我们直接可以使用该对象。</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: inline; BORDER-LEFT-WIDTH: 0px; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      height=572 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931355.png" width=940 
+      border=0></SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">看不清楚上面图，可以偏一下头横着看：</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体"><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=1249 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931356.jpg" width=757 
+      border=0></SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">几个接口函数的解释：</SPAN></P>
+      <P><SPAN style="FONT-SIZE: medium; FONT-FAMILY: 宋体">(1)fb_post</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">对于帧缓冲区实际地址并不需要向上层报告，所有的操作都是通过fb_post了完成。</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">fp_post的任务就是将一个Buffer的内容传递到硬件缓冲区。其实现方式有两种：</SPAN></P>
+      <P><IMG title=image 
+      style="BORDER-TOP-WIDTH: 0px; DISPLAY: block; BORDER-LEFT-WIDTH: 0px; FLOAT: none; BORDER-BOTTOM-WIDTH: 0px; MARGIN-LEFT: auto; MARGIN-RIGHT: auto; BORDER-RIGHT-WIDTH: 0px" 
+      height=103 alt=image 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/110401062931357.png" width=411 
+      border=0></P>
+      <P><SPAN style="FONT-SIZE: small; FONT-FAMILY: 宋体"><FONT 
+      size=2>（方式1）无需拷贝动作，是把Framebuffer的后buffer切为前buffer，然后通过IOCTRL机制告诉FB驱动切换DMA源地地址。这个实现方式的前提是Linux内核必须分配至少两个缓冲区大小的物理内存和实现切换的ioctrol，这个实现快速切换。</FONT></SPAN></P>
+      <P><SPAN style="FONT-SIZE: small; FONT-FAMILY: 宋体"><BR><FONT 
+      size=2></FONT></SPAN></P>
+      <P><SPAN style="FONT-SIZE: small; FONT-FAMILY: 宋体"><FONT 
+      size=2>（方式2）利用Copy的方式。不修改内核，则在适配层利用从拷贝的方式进行，但是这个是费时了。</FONT></SPAN></P>
+      <P><SPAN style="FONT-SIZE: small; FONT-FAMILY: 宋体"><BR><FONT 
+      size=2></FONT></SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">(2)gralloc的主要功能是要完成：</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp; 
+      1）打开屏幕设备 "/dev/fb0",，并映射硬件显示缓冲区。</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp; 
+      2）提供分配共享显示缓存的接口</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp; 
+      3）提供BiltEngine接口（完成硬件加速器的包装）</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">（3）gralloc_alloc输出buffer_handle_t句柄。</SPAN></P>
+      <P><SPAN 
+      style="FONT-SIZE: medium; FONT-FAMILY: 宋体">&nbsp;&nbsp;&nbsp;&nbsp; 
+      这个句柄是共享的基本依据，其基本原理在后面的章节有详细描述。</SPAN></P>
+      <H3>3 总结</H3>
+      <P><SPAN style="FONT-SIZE: medium">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      总结一下，<SPAN 
+      style="FONT-FAMILY: 宋体">/system/lib/hw/gralloc.xxx.so</SPAN>是跟硬件体系相关的一个动态链接库，也可以叫做<A 
+      title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>的硬件抽象层。他实现了Android的硬件抽象接口标准，提供显示内存的分配机制和CopyBit等的加速实现。而如何具体实现这些功能，则跟硬件平台的配备有关系，所以我们看到了对于与不同的硬件架构，有不同的配置关系。</SPAN></P></DIV>
+      <DIV class=pager style="TEXT-ALIGN: center"><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p23.htm">上一页</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966.htm">1</A> <A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p16.htm">..16</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p17.htm">17</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p18.htm">18</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p19.htm">19</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p20.htm">20</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p21.htm">21</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p22.htm">22</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p23.htm">23</A><SPAN 
+      class=p_current>24</SPAN><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">25..</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">28</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">下一页</A>&nbsp; 
+      <INPUT id=goPage value=25><A href="javascript:pager.Jump();">GO</A>
+      <SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/pager.js" 
+      type=text/javascript></SCRIPT>
+
+      <SCRIPT type=text/javascript>var pager=new iwmsPager(24,28,true);</SCRIPT>
+      </DIV>
+      <TABLE id=dlPages style="CLEAR: both" cellSpacing=0 width="95%" 
+      align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=2 height=20>【内容导航】</TD></TR>
+        <TR>
+          <TD width="50%" height=20>第1页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966.htm">分析方法论探讨之设计意图</A> 
+          </TD>
+          <TD width="50%" height=20>第2页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p2.htm">方法论探讨之概念空间篇 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第3页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p3.htm">手机硬件形态</A> 
+          </TD>
+          <TD width="50%" height=20>第4页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p4.htm">手机的软件形态</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第5页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p5.htm">基本空间划分</A> 
+          </TD>
+          <TD width="50%" height=20>第6页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p6.htm">IPC框架分析 
+            Binder，Service，Service manager</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第7页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p7.htm">Service深入分析</A> 
+          </TD>
+          <TD width="50%" height=20>第8页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p8.htm">Android 
+            启动过程详解</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第9页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p9.htm">Zygote 
+            Service</A> </TD>
+          <TD width="50%" height=20>第10页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p10.htm">Android 
+            GWES基本框架篇</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第11页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p11.htm">Android 
+            GWES之Android消息系统</A> </TD>
+          <TD width="50%" height=20>第12页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p12.htm">Android 
+            GWES之窗口管理之基本构架原理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第13页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p13.htm">Android 
+            GWES之Android窗口管理</A> </TD>
+          <TD width="50%" height=20>第14页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p14.htm">Android输入系统</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第15页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p15.htm">Android用户事件输入路径</A> 
+          </TD>
+          <TD width="50%" height=20>第16页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p16.htm">Android电话系统之概述篇</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第17页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p17.htm">Android电话系统之-rild</A> 
+          </TD>
+          <TD width="50%" height=20>第18页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p18.htm">Android电话系统之RIL-Java</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第19页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p19.htm">Android电话系统之GSMCallTracker</A> 
+          </TD>
+          <TD width="50%" height=20>第20页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p20.htm">Android应用程序框架之无边界设计理念</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第21页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p21.htm">Android应用框架之AndroidApplication 
+            </A></TD>
+          <TD width="50%" height=20>第22页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p22.htm">Android应用框架之Activity 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第23页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p23.htm">Andoird 
+            GDI之基本原理及其总体框架</A> </TD>
+          <TD width="50%" height=20>第24页：<A class=highlight 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p24.htm">Android 
+            GDI之显示缓冲管理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第25页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">Androird 
+            GDI之共享缓冲区机制</A> </TD>
+          <TD width="50%" height=20>第26页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p26.htm">Android 
+            GDI之SurfaceFlinger</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第27页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p27.htm">SurfaceFlinger对象建立过程示意</A> 
+          </TD>
+          <TD width="50%" height=20>第28页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">Android 
+            GDI之Surface&amp;Canvas</A> </TD></TR></TBODY></TABLE></DIV><BR>
+      <DIV align=center>
+      <SCRIPT language=javascript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/wangzhai.js"></SCRIPT>
+
+      <DIV class=linuc>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux3.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux8.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></DIV><BR>
+      <DIV style="CLEAR: both; PADDING-LEFT: 20px">上一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33964.htm">Linux设备驱动程序学习</A><BR>下一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33967.htm">Linux Shell 
+      循环计数</A><BR>
+      <DIV align=center>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关资讯</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      href="http://www.linuxidc.com/search.aspx?Where=Nkey&amp;Keyword=Android" 
+      target=_blank>Android</A>&nbsp; </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <TABLE width="100%">
+        <TBODY>
+        <TR>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11309.htm" 
+              target=_blank>Google用Linux的Android打开IC开源大门</A>&nbsp; <SPAN 
+              class=gray>(02/25/2008 06:47:24)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11157.htm" 
+              target=_blank>Gphone手机终于来了!下半年将上市(图)</A>&nbsp; <SPAN 
+              class=gray>(02/14/2008 20:34:03)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2007-12/10010.htm" 
+              target=_blank>自己编译Google Android内核的Linux源码</A>&nbsp; <SPAN 
+              class=gray>(12/24/2007 12:02:34)</SPAN> </LI></UL></TD>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11226.htm" 
+              target=_blank>评论：Google手机是否遭遇成长的烦恼？</A>&nbsp; <SPAN 
+              class=gray>(02/19/2008 12:02:35)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-01/10265.htm" 
+              target=_blank>2008年：“云雾计算”正向我们迎面走来</A>&nbsp; <SPAN 
+              class=gray>(01/01/2008 18:57:09)</SPAN> 
+              <LI><A title="Google手机今天发布明年上市 使用Linux操作系统" 
+              href="http://www.linuxidc.com/Linux/2007-11/8792.htm" 
+              target=_blank>Google手机今天发布明年上市 使用Linux操作</A>&nbsp; <SPAN 
+              class=gray>(11/05/2007 06:46:47)</SPAN> 
+      </LI></UL></TD></TR></TBODY></TABLE></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关图片</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <DIV class=imgList>
+      <UL>
+        <LI style="WIDTH: 25%"><A title="Android 视频缩略图之 MediaStore" 
+        href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank><IMG height=90 alt="Android 视频缩略图之 MediaStore" 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111207070383461t.jpg" 
+        width=120>Android 视频缩略图之</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android 事务操作和数据显示" 
+        href="http://www.linuxidc.com/Linux/2011-12/48806.htm" 
+        target=_blank><IMG height=90 alt="Android 事务操作和数据显示" 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111206093397431t.jpg" 
+        width=120>Android 事务操作和数</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android第一个应用程序helloworld项目详解 
+        href="http://www.linuxidc.com/Linux/2011-12/48804.htm" 
+        target=_blank><IMG height=90 alt=Android第一个应用程序helloworld项目详解 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111206092952291t.jpg" 
+        width=120>Android第一个应用程</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android应用开发之开发环境搭建 
+        href="http://www.linuxidc.com/Linux/2011-12/48803.htm" 
+        target=_blank><IMG height=90 alt=Android应用开发之开发环境搭建 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111206092691795t.jpg" 
+        width=120>Android应用开发之开</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        title="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        href="http://www.linuxidc.com/Linux/2011-12/48802.htm" 
+        target=_blank><IMG height=90 
+        alt="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/11120609225871t.jpg" 
+        width=120>Android修改Eclipse </A></LI>
+        <LI style="WIDTH: 25%"><A title=Android与JavaScript相互调用 
+        href="http://www.linuxidc.com/Linux/2011-12/48801.htm" 
+        target=_blank><IMG height=90 alt=Android与JavaScript相互调用 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111206092021191t.jpg" 
+        width=120>Android与JavaScript</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        href="http://www.linuxidc.com/Linux/2011-12/48800.htm" 
+        target=_blank><IMG height=90 alt=Android之帧动画实现 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111206091880021t.jpg" 
+        width=120>Android之帧动画实现</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android Activity 和 HTML 数据通信" 
+        href="http://www.linuxidc.com/Linux/2011-12/48794.htm" 
+        target=_blank><IMG height=90 alt="Android Activity 和 HTML 数据通信" 
+        src="Android GDI之显示缓冲管理_Android核心分析_files/111206091188453t.jpg" 
+        width=120>Android Activity 和 </A></LI></UL></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本文评论</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      style="CURSOR: hand" href="http://www.linuxidc.com/remark.aspx?id=33966" 
+      target=_blank>全部评论</A> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>&nbsp;<IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face1.gif"> sss &nbsp; <SPAN 
+      class=gray>(33 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face1.gif"> ee &nbsp; <SPAN 
+      class=gray>(ww ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face1.gif"> 222222222 &nbsp; 
+      <SPAN class=gray>(3333333 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face1.gif"> 111 &nbsp; <SPAN 
+      class=gray>(222 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face1.gif"> dfdf &nbsp; <SPAN 
+      class=gray>(zfds ,11月02日 )</SPAN><BR></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>发表评论</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <FORM id=remarkForm 
+      style="PADDING-RIGHT: 5px; PADDING-LEFT: 5px; PADDING-BOTTOM: 5px; PADDING-TOP: 5px" 
+      onsubmit="return checkRemark();" action=../../remark.aspx?id=33966 
+      method=post>
+      <SCRIPT language=javascript type=text/javascript>
+			function checkRemark()
+			{
+			var form=document.getElementById("remarkForm");
+			var remarkSize = 1000;
+			if (form.body.value=="")
+			{	alert("请填写评论内容");
+				form.body.focus();
+				return false;
+			}
+			if (form.username.value=="")
+			{	alert("请填写姓名");
+				form.username.focus();
+				return false;
+			}
+			if (form.body.value.length>remarkSize)
+			{	form.body.value = form.body.value.substr(0,remarkSize);
+				showLen(form.body);
+				form.body.focus();
+				alert("评论内容不可以超过"+remarkSize+"字,已帮你删除多余部分");
+				return false;
+			}
+			if (form.username.value.length>10)
+			{	alert("姓名不可以超过10个字");
+				form.username.focus();
+				return false;
+			}
+			form.submit.disabled=true;
+			form.vcode.value = VCode("Android核心分析");
+			return true;
+			}
+			function showLen(obj)
+			{
+				document.getElementById("bodyLen").value=obj.value.length;
+			}
+			</SCRIPT>
+      <INPUT type=radio CHECKED value=1 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face1.gif"><INPUT type=radio 
+      value=2 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face2.gif"><INPUT type=radio 
+      value=3 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face3.gif"><INPUT type=radio 
+      value=4 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face4.gif"><INPUT type=radio 
+      value=5 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face5.gif"><INPUT type=radio 
+      value=6 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face6.gif"><INPUT type=radio 
+      value=7 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face7.gif"><INPUT type=radio 
+      value=8 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face8.gif"><INPUT type=radio 
+      value=9 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face9.gif"><INPUT type=radio 
+      value=10 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face10.gif"><INPUT type=radio 
+      value=11 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face11.gif"><INPUT type=radio 
+      value=12 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face12.gif"><INPUT type=radio 
+      value=13 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face13.gif"><INPUT type=radio 
+      value=14 name=face><IMG alt="" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/face14.gif"> 
+      <BR>请您注意：<BR>遵守国家有关法律、法规，尊重网上道德，承担一切因您的行为而直接或间接引起的法律责任。<BR>LinuxIDC.com拥有管理笔名和留言的一切权利。<BR>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux11.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <DIV style="PADDING-TOP: 5px">点评： <TEXTAREA onkeydown=showLen(this) onkeyup=showLen(this) name=body rows=12 cols=78></TEXTAREA> 
+      字数<INPUT id=bodyLen 
+      style="BORDER-TOP-WIDTH: 0px; BORDER-LEFT-WIDTH: 0px; BACKGROUND: none transparent scroll repeat 0% 0%; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      readOnly size=3> </DIV>
+      <DIV style="PADDING-TOP: 5px">姓名： <INPUT id=i_username maxLength=15 
+      size=10 name=username> <INPUT id=i_submit type=submit value=" 发 表 " name=submit> </DIV>
+      <SCRIPT type=text/javascript>
+			var remarkmember = false;
+			var allowremark = true;
+			if (remarkmember){
+				document.getElementById("i_username").readonly=true;
+				document.write("(限会员登录后发表评论)");
+			}
+			if (!allowremark){
+				document.getElementById("i_submit").disabled=true;
+			}
+			</SCRIPT>
+
+      <SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/clientDate.js" 
+      type=text/javascript></SCRIPT>
+      <INPUT type=hidden name=vcode> </FORM></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV><IFRAME 
+      style="VISIBILITY: hidden; WIDTH: 0px; HEIGHT: 0px" 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/CAASIN6Z.htm"></IFRAME></TD>
+    <TD class=linuz vAlign=top>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linuxgif.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>最新资讯</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48852.htm" 
+        target=_blank>不满AMD介入 英特尔拒将Android移植到PC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank>Android 视频缩略图之 MediaStore</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48850.htm" 
+        target=_blank>深度探索Android应用程序的基本原理</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48849.htm" 
+        target=_blank>Linux内核（v0.11）-从开机加电执行到main函数前</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48848.htm" 
+        target=_blank>notepad NppFTP插件连接Linux(此处为Debian)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48847.htm" 
+        target=_blank>mini6410 实现简单 adc驱动--友善版</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48846.htm" 
+        target=_blank>Apache ActiveMQ故障转移机制远程拒绝服务漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48845.htm" 
+        target=_blank>PHP “exif_process_IFD_TAG()”远程整数溢出漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48844.htm" 
+        target=_blank>ProFTPD响应池释放后重用代码执行漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48843.htm" 
+        target=_blank>Mozilla Firefox CSS “:visited”信息泄露漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48842.htm" 
+        target=_blank>解决Gentoo各种问题</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48841.htm" 
+        target=_blank>利用Ubuntu启动U盘安装DOS和WindowsXP</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48840.htm" 
+        target=_blank>利用Linux启动盘切换安装两个盘符一样的Windows</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48839.htm" 
+        target=_blank>利用Ubuntu的分区工具备份与恢复WindowsXP系统分区</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48838.htm" 
+        target=_blank>新的GNOME 3通知设计</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48837.htm" 
+        target=_blank>深度Linux为何是Ubuntu大树上的一支嫩枝芽?</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48836.htm" 
+        target=_blank>Lime诞生 U盘上免费体验Chrome OS</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48835.htm" 
+        target=_blank>Linux 下10款终端音乐播放器</A> 
+        <LI><A 
+        title="编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解决编译C++程序时链接MongoDB动态库失败的问题" 
+        href="http://www.linuxidc.com/Linux/2011-12/48834.htm" 
+        target=_blank>编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48833.htm" 
+        target=_blank>Ubuntu下安装MongoDB全程图解</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=linuzb>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux16.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="Android GDI之显示缓冲管理_Android核心分析_files/linux18.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本周热门</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2007-06/4767.htm" 
+        target=_blank>Linux shell脚本全面学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/33966.htm" 
+        target=_blank>Android核心分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-02/24667.htm" 
+        target=_blank>详细易懂的Linux makefile 教程</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39271.htm" 
+        target=_blank>Android Binder设计与实现 – 设计篇</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9623.htm" 
+        target=_blank>Linux内核的ioctl函数学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40508.htm" 
+        target=_blank>技术内幕：Android的IPC机制-Binder</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35982.htm" 
+        target=_blank>u-boot-2009.08在mini2440上的移植</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33600.htm" 
+        target=_blank>S3C2440上LCD驱动(FrameBuffer)实例开发讲解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35392.htm" 
+        target=_blank>Android之PopupWindow弹出对话框</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/41159.htm" 
+        target=_blank>Android控件Gallery 3D效果</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/34541.htm" 
+        target=_blank>Android驱动例子（LED灯控制）</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-08/27880.htm" 
+        target=_blank>Android C/C++ 开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2009-01/18242.htm" 
+        target=_blank>在Linux下安装GCC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-04/25638.htm" 
+        target=_blank>Java删除文件</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39270.htm" 
+        target=_blank>Android深入浅出之Binder机制</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33022.htm" 
+        target=_blank>基于Linux的v4l2视频架构驱动编写</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40495.htm" 
+        target=_blank>Android Bundle类</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-02/32396.htm" 
+        target=_blank>Android RIL 调试分析全记录</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38977.htm" 
+        target=_blank>在Ubuntu上为Android系统编写Linux内核驱动程序</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31291.htm" 
+        target=_blank>Linux Platform驱动程序框架解析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31385.htm" 
+        target=_blank>Android开发入门——Socket编程</A> 
+        <LI><A title="嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发讲解" 
+        href="http://www.linuxidc.com/Linux/2011-02/32646.htm" 
+        target=_blank>嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33086.htm" 
+        target=_blank>Linux下SPI驱动分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38866.htm" 
+        target=_blank>百度地图API之根据经纬度查询地址信息(Android)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9546.htm" 
+        target=_blank>在Windows平台下使用安装GCC(图)</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV></TD></TR></TBODY></TABLE>
+<DIV id=footer><BR>
+<P align=center><A href="http://www.linuxidc.com/aboutus.htm">Linux公社简介</A> - <A 
+href="http://www.linuxidc.com/adsense.htm">广告服务</A> - <A 
+href="http://www.linuxidc.com/sitemap.aspx">网站地图</A> - <A 
+href="http://www.linuxidc.com/help.htm">帮助信息</A> - <A 
+href="http://www.linuxidc.com/contactus.htm">联系我们</A><BR>本站（LinuxIDC）所刊载文章不代表同意其说法或描述，仅为提供更多信息，也不构成任何建议。<BR>
+<SCRIPT language=javaScript src="Android GDI之显示缓冲管理_Android核心分析_files/qq.js" 
+type=text/javascript></SCRIPT>
+<BR>
+<SCRIPT language=javaScript src="Android GDI之显示缓冲管理_Android核心分析_files/foot.js" 
+type=text/javascript></SCRIPT>
+<BR>Copyright © 2006-2011　<A href="http://www.linuxidc.com/">Linux公社</A>　All 
+rights reserved 浙ICP备06018118号</P>
+<DIV class=menuskin id=popmenu 
+onmouseover="clearhidemenu();highlightmenu(event,'on')" style="Z-INDEX: 100" 
+onmouseout="highlightmenu(event,'off');dynamichide(event)"></DIV>
+<SCRIPT src="Android GDI之显示缓冲管理_Android核心分析_files/menu.js" type=text/javascript 
+charset=utf-8></SCRIPT>
+
+<SCRIPT type=text/javascript>
+	jsdone=true;
+	</SCRIPT>
+</DIV></DIV>
+<SCRIPT language=javaScript 
+src="Android GDI之显示缓冲管理_Android核心分析_files/linuxren1.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="Android GDI之显示缓冲管理_Android核心分析_files/linuxren2.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="Android GDI之显示缓冲管理_Android核心分析_files/linuxren3.js" 
+type=text/javascript></SCRIPT>
+</BODY></HTML>

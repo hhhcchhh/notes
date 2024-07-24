@@ -1,0 +1,1277 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<!-- saved from url=(0049)http://www.linuxidc.com/Linux/2011-04/33966p6.htm -->
+<HTML lang=utf-8 xmlns="http://www.w3.org/1999/xhtml"><HEAD><TITLE>IPC框架分析 Binder，Service，Service manager_Android核心分析</TITLE>
+<META http-equiv=content-type content=text/html;charset=utf-8><LINK 
+href="favicon.ico" type=image/x-icon rel=icon><LINK href="favicon.ico" 
+type=image/x-icon rel="shortcut icon">
+<META 
+content="作为一个从其他平台装接过来的程序员，要从事Andoid平台系统开发，我的关于手机平台上积累的知识已经不能满足需要了，Android为我们带来了大量的新名词，Activity，Manifest，INTENT，Service，Binder，Dalvik虚拟机，Framework，Linux，Navtive ，JNI.....。通过在源代码，在开发社区，在开发博客，甚至在招聘过程中，我不断的寻求Android是什么。经过一定时间的沉淀，我慢慢的理解到Android不仅仅是一类手机的总称，不仅仅是一个手机开发平台，不仅仅是一个虚拟java操作系统，不仅仅是一个开发社区，一个开发标准，不仅仅是一堆代码，Android已经成了一个新的潮流。" 
+name=description>
+<META content=Linux,ubuntu,Fedora,红旗Linux,suse,SQL,PHP,mysql,apache,Linux公社 
+name=keywords>
+<META content="MSHTML 6.00.2900.6169" name=GENERATOR>
+<META content=Linux name=generator><LINK 
+href="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/style.css" 
+type=text/css rel=stylesheet>
+<SCRIPT src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/head.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT type=text/javascript>
+var imgMaxWidth=600;
+var urlPrefix="../../";
+</SCRIPT>
+
+<SCRIPT src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/show.js" 
+type=text/javascript></SCRIPT>
+</HEAD>
+<BODY>
+<DIV class=twidth>
+<DIV id=sitehead>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<TABLE width="100%">
+  <TBODY>
+  <TR align=middle>
+    <TD width=160><A href="http://www.linuxidc.com/"><IMG 
+      style="FILTER: chroma(color=#FFFFFF)" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/logo.jpg" 
+      border=0></A> </TD>
+    <TD>
+      <DIV align=center>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></TD>
+    <TD style="LINE-HEIGHT: 120%" width=100><A 
+      onclick="javascript:window.external.addFavorite('http://www.linuxidc.com/','Linux公社-Linux|Ubuntu|Fedora|新闻|下载|教程|安装|SUSE|Linux发行版|编程|服务器')" 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p6.htm#">加入收藏</A><BR><A 
+      href="http://www.linuxidc.com/sitemap.aspx">网站地图</A><BR><A 
+      href="http://www.linuxidc.com/search.aspx">网站搜索</A><BR>
+      <SCRIPT 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/language.js" 
+      type=text/javascript></SCRIPT>
+    </TD></TR></TBODY></TABLE></DIV></DIV>
+<DIV id=navbar>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<SCRIPT 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/popmenu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+<A class=first href="http://www.linuxidc.com/index.htm">首页</A><A 
+href="http://www.linuxidc.com/it/index.htm">Linux新闻</A><A 
+href="http://www.linuxidc.com/Linuxit/index.htm">Linux技术交流</A><A 
+href="http://www.linuxidc.com/MySql/index.htm">数据库技术</A><A class=thisclass 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A><A 
+href="http://www.linuxidc.com/Apache/index.htm">服务器应用</A><A 
+href="http://www.linuxidc.com/Unix/index.htm">Linux网络安全</A><A 
+href="http://www.linuxidc.com/download/index.htm">Linux下载</A><A 
+href="http://www.linuxidc.com/Linuxrz/index.htm">Linux认证</A><A 
+href="http://www.linuxidc.com/theme/index.htm">Linux主题</A><A 
+href="http://www.linuxidc.com/Linuxwallpaper/index.htm">Linux壁纸</A><A 
+href="http://www.linuxidc.com/digi/index.htm">数码</A><A 
+href="http://www.linuxidc.com/mobile/index.htm">手机</A><A 
+href="http://www.linuxidc.com/nbook/index.htm">笔记本</A> </DIV></DIV>
+<DIV id=navsub>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m><A href="http://www.linuxidc.com/index.htm">首页</A> → <A 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A> </DIV></DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux1.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linuxa.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<TABLE id=middle style="TABLE-LAYOUT: fixed" cellSpacing=0 cellPadding=0 
+width="100%">
+  <TBODY>
+  <TR>
+    <TD vAlign=top>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>阅读内容</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm id=bodyTd>
+      <DIV id=printBody style="WORD-BREAK: break-all"><BR>
+      <DIV align=center>
+      <H1 class=aTitle>Android核心分析</H1></DIV>
+      <DIV align=center>
+      <H2 class=subTitle>IPC框架分析 Binder，Service，Service manager</H2></DIV>
+      <TABLE width="97%" align=center>
+        <TBODY>
+        <TR>
+          <TD width=120>[日期：2011-04-01]</TD>
+          <TD align=middle>来源：Linux社区&nbsp; 作者：maxleng</TD></TR></TBODY></TABLE>
+      <DIV class=linua>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux2.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linub>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux19.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV id=content><!--IWMS_AD_BEGIN-->
+      <TABLE width="97%" align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=3>
+            <DIV align=center>
+            <SCRIPT language=javaScript 
+            src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/system60.js" 
+            type=text/javascript></SCRIPT>
+            </DIV></TD></TR></TBODY></TABLE><!--IWMS_AD_END-->
+      <H2 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline">IPC框架分析 Binder，Service，Service 
+      manager</SPAN></H2>
+      <P><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp; </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">我首先从宏观的角度观察</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder,Service,Service&nbsp;Manager，并阐述</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">各自的概念。从</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Linux</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的概念空间中，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的设计</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Activity托管在不同的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的进程，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">也都是托管在不同的进程，不同进程间的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Activity,Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">之间要交换数据属于</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">就是为了</SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Activity通讯而设计的一个轻量级的</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">框架。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">在代码分析中，我发现</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中只是把</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">理解成进程间通讯的实现，有点狭隘，而是应该站在公共对象请求代理这个高度来理解</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的概念，这样我们就会看到不一样的格局，从这个高度来理解设计意图，我们才会对</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中的一些天才想法感到惊奇。从</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的外特性概念空间中，我们看不到进程的概念，而是</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Activity</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">AIDL</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">INTENT</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。一般的如果我作为设计者，在我们的根深蒂固的想法中，这些都是如下的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">C/S</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">架构，客户端和服务端直接通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">交互数据，打开</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">写入数据，通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">读取数据，通讯就可以完成了。</SPAN></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=52 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243481.png" 
+      width=534></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">该注意到</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的概念中，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">是一个很低层的概念，上面一层根本都看不到</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，而是</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Activity</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">跟一个</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的对象直接通过方法调用，获取服务。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这个就是</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">提供给我们的外特性：在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中，要完成某个操作，所需要做的就是请求某个有能力的服务对象去完成动作，而无需知道这个通讯是怎样工作的，以及服务在哪里。所以</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Andoid</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">在本质上属于对象请求代理架构，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的设计者用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CORBA</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的概念将自己包装了一下，实现了一个微型的轻量级</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CORBA</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">架构，这就是</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Andoid</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设计的意图所在，它并不是仅仅解决通讯，而是给出了一个架构，一种设计理念，这就是</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的闪光的地方。</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">更多考虑了数据交换的便捷，并且只是解决本机的进程间的通讯，所以不像</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CORBA</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">那样复杂，所以叫做轻量级。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">所以要理解</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">架构，就需要了解</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CORBA</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的架构。而</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CORBA</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的架构在本质上可以使用下面图来表示：</SPAN></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=36 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243482.png" 
+      width=328></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">在服务端，多了一个代理器，更为抽象一点我们可以下图来表示。</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=164 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243483.png" 
+      width=292></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline">分析和</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CORBA</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的大体理论架构，我给出下面的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的对象代理结构。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=480 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243484.png" 
+      width=459></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline">在结构图中，我们可以较为清楚的把握</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的ＩＰＣ包含了如下的概念：</SPAN></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <UL>
+        <LI><SPAN style="FONT-FAMILY: mceinline">设备上下文什（</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">ContextObject</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">）</SPAN></SPAN> 
+        <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+        style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">设备上下文包含关于客服端，环境或者请求中没有作为参数传递个操作的上下文信息，应用程序开发者用</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">ContextObject</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">接口上定义的操作来创建和操作上下文。</SPAN></SPAN></P>
+        <LI><SPAN style="FONT-FAMILY: mceinline">&nbsp;<A title=Android 
+        href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">代理：这个是指代理对象</SPAN></SPAN> 
+        <LI><SPAN 
+        style="FONT-FAMILY: mceinline">&nbsp;Binder&nbsp;Linux</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">内核提供的</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">通讯机制</SPAN></SPAN> </LI></UL>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的外特性空间是不需要知道服务在那里，只要通过代理对象完成请求，但是我们要探究</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">是如何实现这个架构，首先要问的是在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Client</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">端要完成云服务端的通讯，首先应该知道服务在哪里？我们首先来看看</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manger</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">管理了那些数据。</SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">提供了</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">add&nbsp;service,check&nbsp;service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">两个重要的方法，并且维护了一个服务列表记录登记的服务名称和句柄。</SPAN></SPAN></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=294 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243485.png" 
+      width=555></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">Service&nbsp;manager 
+      service</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">使用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">0</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">来标识自己。并且在初始化的时候，通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设备使用</SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">BINDER_SET_CONTEXT_MGR&nbsp;ioctl</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">将自己变成了</SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">CONTEXT_MGR。Svclist</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中存储了服务的名字和</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handle</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，这个</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handle</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">作为</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Client</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">端发起请求时的目标地址。服务通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">add_service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">方法将自己的名字和</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">标识</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">handle</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">登记在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">svclist</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中。而服务请求者，通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">check_service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">方法，通过服务名字在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">service&nbsp;list</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中获取到</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">service&nbsp;</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">相关联的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的标识</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">handle,</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">通过这个</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handle</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">作为请求包的目标地址发起请求。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">我们理解了Service 
+      Manager的工作就是登记功能，现在再回到ＩＰＣ上，客服端如何建立连接的？我们首先回到通讯的本质：</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。从一般的概念来讲，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设计者在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Linux</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">内核中设计了一个叫做</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的设备文件，专门用来进行</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的数据交换。所有从数据流来看</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Java</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">对象从</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Java</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">VM</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间进入到</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">C++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间进行了一次转换，并利用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">C++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间的函数将转换过的对象通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">driver\binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设备传递到服务进程，从而完成进程间的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IPC</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。这个过程可以用下图来表示。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243488.png"></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">这里数据流有几层转换过程。</SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">（1）&nbsp;从</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">JVM</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间传到</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">c++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间，这个是靠</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">JNI</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">使用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ENV</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">来完成对象的映射过程。</SPAN></SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">（2）&nbsp;从</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">c++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间传入内核</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设备，使用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ProcessState</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">类完成工作。</SPAN></SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">（3）&nbsp;Service</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">从内核中</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设备读取数据。</SPAN></SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">Ａｎｄｒｏｉｄ设计者需要利用面向对象的技术设计一个框架来屏蔽掉这个过程。要让上层概念空间中没有这些细节。<A 
+      title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>设计者是怎样做的呢？我们通过</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">c++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间代码分析，看到有如下空间概念包装</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">(ProcessState@(ProcessState.cpp)</SPAN></SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=305 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243486.png" 
+      width=423></SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; 
+      在ProcessState类中包含了通讯细节，利用open_binder打开Linux设备dev\binder,通过ioctrl建立的基本的通讯框架。利用上层传递下来的servicehandle来确定请求发送到那个Service。通过分析我终于明白了</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Bnbinder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">BpBinder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的命名含义，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Bn-</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">代表</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Native</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，而</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Bp</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">代表</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Proxy</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。一旦理解到这个层次，ProcessState就容易弄明白了。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      下面我们看</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">JVM</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">概念空间中对这些概念的包装。</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">为了通篇理解设备上下文，我们需要将</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>&nbsp;VM</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">概念空间中的设备上下文和</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">C++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">空间总的设备上下文连接起来进行研究。</SPAN></SPAN></SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">为了在上层使用统一的接口，在</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">JVM</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">层面有两个东西。在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">中，为了简化管理框架，引入了</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ServiceManger</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这个服务。所有的服务都是从</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ServiceManager</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">开始的，只用通过</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">获取到某个特定的服务标识构建代理</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IBinder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的设计中利用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">是默认的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handle</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">为</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">0</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，只要设置请求包的目标句柄为</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">0</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，就是发给</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这个</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的。在做服务请求时，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">建立一个新的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager&nbsp;Proxy</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager&nbsp;Proxy</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">使用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ContexObject</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">作为</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">和</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager&nbsp;Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">（服务端）进行通讯。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">我们看到</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">代码一般的获取</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">建立本地代理的用法如下：</SPAN></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IXXX&nbsp;&nbsp;mIxxx=IXXXInterface.Stub.asInterface(ServiceManager.getService("xxx"));</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">例如：使用输入法服务：</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IInputMethodManager&nbsp;mImm=</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">IInputMethodManager.Stub.asInterface(ServiceManager.getService("input_method"));</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这些服务代理获取过程分解如下：</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">（1）&nbsp;通过调用</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">GetContextObject</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">调用获取设备上下对象。注意在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>JVM</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">概念空间的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ContextObject</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">只是</SPAN><SPAN 
+      style="WHITE-SPACE: pre"><SPAN style="FONT-FAMILY: mceinline"> 
+      </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">与</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manger&nbsp;Service</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">通讯的代理</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">有对应关系。这个跟</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">c++</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">概念空间的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">GetContextObject</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">意义是不一样的。</SPAN></SPAN></P>
+      <P class=p0><SPAN><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">注意看看关键的代码</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp; 
+      &nbsp;BinderInternal.getContextObject</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">（）&nbsp;</SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"> &nbsp;&nbsp;@BinderInteral.java</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;</SPAN><SPAN 
+      style="WHITE-SPACE: pre"><SPAN style="FONT-FAMILY: mceinline"> 
+      </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp;NATIVE&nbsp;JNI:getContextObject() 
+      &nbsp;&nbsp;@<A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>_util_Binder.cpp</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>_util_getConextObject&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@android_util_Binder.cpp</SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp;&nbsp;</SPAN><SPAN 
+      style="WHITE-SPACE: pre"><SPAN style="FONT-FAMILY: mceinline"> 
+      </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;ProcessState::self()-&gt;getCotextObject(0)&nbsp;&nbsp;@processState.cpp</SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN 
+      style="WHITE-SPACE: pre"><SPAN style="FONT-FAMILY: mceinline"> 
+      </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;getStrongProxyForHandle(0)&nbsp;&nbsp;@</SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN 
+      style="WHITE-SPACE: pre"><SPAN style="FONT-FAMILY: mceinline"> 
+      </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">NEW&nbsp;BpBinder(0)</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">注意ProcessState::self()-&gt;getCotextObject(0)&nbsp;@processtate.cpp</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，就是该函数在进程空间建立</SPAN><SPAN 
+      style="WHITE-SPACE: pre"><SPAN style="FONT-FAMILY: mceinline"> 
+      </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">了</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ProcessState</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">对象，打开了</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设备</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">dev\binder,</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">并且传递了参数</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">0</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，这个</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">0</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">代表了与</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Service&nbsp;Manager</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这个服务绑定。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">（2）&nbsp;通过调用</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ServiceManager.asInterface</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">（</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ContextObject</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">）建立一个代理</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ServiceManger</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp; 
+      &nbsp;&nbsp;mRemote=&nbsp;ContextObject(Binder)</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp; 
+      &nbsp;这样就建立起来</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ServiceManagerProxy</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">通讯框架。</SPAN></SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;(3)</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">客户端通过调用</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ServiceManager</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">getService</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的方法建立一个相关的代理</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Binder</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp;ServiceMangerProxy.remote.transact(GET_SERVICE)</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      IBinder=ret.ReadStrongBinder()</SPAN><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"> </SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">-》这个就是JVM空间的代理Binder</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp;JNI&nbsp;Navite:&nbsp;<A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>_os_Parcel_readStrongBinder()&nbsp;&nbsp;&nbsp;&nbsp;@android_util_binder.cpp</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp; &nbsp;Parcel-&gt;readStrongBinder() &nbsp;@pacel.cpp</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;unflatten_binder 
+      &nbsp;@pacel.cpp</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp; &nbsp;getStrongProxyForHandle(flat_handle)</SPAN></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+      &nbsp;NEW&nbsp;BpBinder(flat_handle)-》这个就是底层c++空间新建的代理Binder。</SPAN></P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">整个建立过程可以使用如下的示意图来表示：</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline"><IMG height=533 alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/110401062243487.png" 
+      width=664></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline">&nbsp;&nbsp; &nbsp; 
+      &nbsp;Activity为了建立一个IPC，需要建立两个连接：访问Servicemanager Service的连接，IXXX具体XXX 
+      Service的代理对象与XXXService的连接。这两个连接对应c++空间ProcessState中BpBinder。对IXXX的操作最后就是对BpBinder的操作。由于我们在写一个Service时，在一个Package中写了Service 
+      Native部分和Service Proxy部分，而Native和Proxy都实现相同的接口：IXXX 
+      Interface,但是一个在服务端，一个在客服端。客户端调用的方式是使用remote-&gt;transact方法向Service发出请求，而在服务端的OnTransact中则是处理这些请求。所以在<A 
+      title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A> 
+      Client空间就看到这个效果：只需要调用代理对象方法就达到了对远程服务的调用目的，实际上这个调用路径好长好长。</SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=MsoNormal><SPAN>&nbsp;&nbsp; &nbsp; &nbsp; 
+      &nbsp;我们其实还一部分没有研究，就是同一个进程之间的对象传递与远程传递是区别的。同一个进程间专递服务地和对象，就没有代理</SPAN><SPAN 
+      lang=EN-US>BpBinder</SPAN><SPAN>产生，而只是对象的直接应用了。应用程序并不知道数据是在同一进程间传递还是不同进程间传递，这个只有内核中的</SPAN><SPAN 
+      lang=EN-US>Binder</SPAN><SPAN>知道，所以内核</SPAN><SPAN 
+      lang=EN-US>Binder</SPAN><SPAN>驱动可以将</SPAN><SPAN 
+      lang=EN-US>Binder</SPAN><SPAN>对象数据类型从</SPAN><SPAN 
+      lang=EN-US>BINDER_TYPE_BINDER</SPAN><SPAN>修改为</SPAN><SPAN 
+      lang=EN-US>BINDER_TYPE_HANDLE</SPAN><SPAN>或者</SPAN><SPAN 
+      lang=EN-US>BINDER_TYPE_WEAK_HANDLE作为</SPAN><SPAN>引用传递。</SPAN></P></DIV>
+      <DIV class=pager style="TEXT-ALIGN: center"><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p5.htm">上一页</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966.htm">1</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p2.htm">2</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p3.htm">3</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p4.htm">4</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p5.htm">5</A><SPAN 
+      class=p_current>6</SPAN><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p7.htm">7</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p8.htm">8</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p9.htm">9..</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">28</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p7.htm">下一页</A>&nbsp; 
+      <INPUT id=goPage value=7><A href="javascript:pager.Jump();">GO</A>
+      <SCRIPT 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/pager.js" 
+      type=text/javascript></SCRIPT>
+
+      <SCRIPT type=text/javascript>var pager=new iwmsPager(6,28,true);</SCRIPT>
+      </DIV>
+      <TABLE id=dlPages style="CLEAR: both" cellSpacing=0 width="95%" 
+      align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=2 height=20>【内容导航】</TD></TR>
+        <TR>
+          <TD width="50%" height=20>第1页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966.htm">分析方法论探讨之设计意图</A> 
+          </TD>
+          <TD width="50%" height=20>第2页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p2.htm">方法论探讨之概念空间篇 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第3页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p3.htm">手机硬件形态</A> 
+          </TD>
+          <TD width="50%" height=20>第4页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p4.htm">手机的软件形态</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第5页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p5.htm">基本空间划分</A> 
+          </TD>
+          <TD width="50%" height=20>第6页：<A class=highlight 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p6.htm">IPC框架分析 
+            Binder，Service，Service manager</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第7页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p7.htm">Service深入分析</A> 
+          </TD>
+          <TD width="50%" height=20>第8页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p8.htm">Android 
+            启动过程详解</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第9页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p9.htm">Zygote 
+            Service</A> </TD>
+          <TD width="50%" height=20>第10页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p10.htm">Android 
+            GWES基本框架篇</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第11页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p11.htm">Android 
+            GWES之Android消息系统</A> </TD>
+          <TD width="50%" height=20>第12页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p12.htm">Android 
+            GWES之窗口管理之基本构架原理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第13页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p13.htm">Android 
+            GWES之Android窗口管理</A> </TD>
+          <TD width="50%" height=20>第14页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p14.htm">Android输入系统</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第15页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p15.htm">Android用户事件输入路径</A> 
+          </TD>
+          <TD width="50%" height=20>第16页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p16.htm">Android电话系统之概述篇</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第17页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p17.htm">Android电话系统之-rild</A> 
+          </TD>
+          <TD width="50%" height=20>第18页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p18.htm">Android电话系统之RIL-Java</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第19页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p19.htm">Android电话系统之GSMCallTracker</A> 
+          </TD>
+          <TD width="50%" height=20>第20页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p20.htm">Android应用程序框架之无边界设计理念</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第21页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p21.htm">Android应用框架之AndroidApplication 
+            </A></TD>
+          <TD width="50%" height=20>第22页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p22.htm">Android应用框架之Activity 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第23页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p23.htm">Andoird 
+            GDI之基本原理及其总体框架</A> </TD>
+          <TD width="50%" height=20>第24页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p24.htm">Android 
+            GDI之显示缓冲管理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第25页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">Androird 
+            GDI之共享缓冲区机制</A> </TD>
+          <TD width="50%" height=20>第26页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p26.htm">Android 
+            GDI之SurfaceFlinger</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第27页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p27.htm">SurfaceFlinger对象建立过程示意</A> 
+          </TD>
+          <TD width="50%" height=20>第28页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">Android 
+            GDI之Surface&amp;Canvas</A> </TD></TR></TBODY></TABLE></DIV><BR>
+      <DIV align=center>
+      <SCRIPT language=javascript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/wangzhai.js"></SCRIPT>
+
+      <DIV class=linuc>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux3.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux8.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></DIV><BR>
+      <DIV style="CLEAR: both; PADDING-LEFT: 20px">上一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33964.htm">Linux设备驱动程序学习</A><BR>下一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33967.htm">Linux Shell 
+      循环计数</A><BR>
+      <DIV align=center>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关资讯</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      href="http://www.linuxidc.com/search.aspx?Where=Nkey&amp;Keyword=Android" 
+      target=_blank>Android</A>&nbsp; </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <TABLE width="100%">
+        <TBODY>
+        <TR>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11309.htm" 
+              target=_blank>Google用Linux的Android打开IC开源大门</A>&nbsp; <SPAN 
+              class=gray>(02/25/2008 06:47:24)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11157.htm" 
+              target=_blank>Gphone手机终于来了!下半年将上市(图)</A>&nbsp; <SPAN 
+              class=gray>(02/14/2008 20:34:03)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2007-12/10010.htm" 
+              target=_blank>自己编译Google Android内核的Linux源码</A>&nbsp; <SPAN 
+              class=gray>(12/24/2007 12:02:34)</SPAN> </LI></UL></TD>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11226.htm" 
+              target=_blank>评论：Google手机是否遭遇成长的烦恼？</A>&nbsp; <SPAN 
+              class=gray>(02/19/2008 12:02:35)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-01/10265.htm" 
+              target=_blank>2008年：“云雾计算”正向我们迎面走来</A>&nbsp; <SPAN 
+              class=gray>(01/01/2008 18:57:09)</SPAN> 
+              <LI><A title="Google手机今天发布明年上市 使用Linux操作系统" 
+              href="http://www.linuxidc.com/Linux/2007-11/8792.htm" 
+              target=_blank>Google手机今天发布明年上市 使用Linux操作</A>&nbsp; <SPAN 
+              class=gray>(11/05/2007 06:46:47)</SPAN> 
+      </LI></UL></TD></TR></TBODY></TABLE></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关图片</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <DIV class=imgList>
+      <UL>
+        <LI style="WIDTH: 25%"><A title="Android 视频缩略图之 MediaStore" 
+        href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank><IMG height=90 alt="Android 视频缩略图之 MediaStore" 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111207070383461t.jpg" 
+        width=120>Android 视频缩略图之</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android 事务操作和数据显示" 
+        href="http://www.linuxidc.com/Linux/2011-12/48806.htm" 
+        target=_blank><IMG height=90 alt="Android 事务操作和数据显示" 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111206093397431t.jpg" 
+        width=120>Android 事务操作和数</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android第一个应用程序helloworld项目详解 
+        href="http://www.linuxidc.com/Linux/2011-12/48804.htm" 
+        target=_blank><IMG height=90 alt=Android第一个应用程序helloworld项目详解 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111206092952291t.jpg" 
+        width=120>Android第一个应用程</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android应用开发之开发环境搭建 
+        href="http://www.linuxidc.com/Linux/2011-12/48803.htm" 
+        target=_blank><IMG height=90 alt=Android应用开发之开发环境搭建 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111206092691795t.jpg" 
+        width=120>Android应用开发之开</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        title="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        href="http://www.linuxidc.com/Linux/2011-12/48802.htm" 
+        target=_blank><IMG height=90 
+        alt="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/11120609225871t.jpg" 
+        width=120>Android修改Eclipse </A></LI>
+        <LI style="WIDTH: 25%"><A title=Android与JavaScript相互调用 
+        href="http://www.linuxidc.com/Linux/2011-12/48801.htm" 
+        target=_blank><IMG height=90 alt=Android与JavaScript相互调用 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111206092021191t.jpg" 
+        width=120>Android与JavaScript</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        href="http://www.linuxidc.com/Linux/2011-12/48800.htm" 
+        target=_blank><IMG height=90 alt=Android之帧动画实现 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111206091880021t.jpg" 
+        width=120>Android之帧动画实现</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android Activity 和 HTML 数据通信" 
+        href="http://www.linuxidc.com/Linux/2011-12/48794.htm" 
+        target=_blank><IMG height=90 alt="Android Activity 和 HTML 数据通信" 
+        src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/111206091188453t.jpg" 
+        width=120>Android Activity 和 </A></LI></UL></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本文评论</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      style="CURSOR: hand" href="http://www.linuxidc.com/remark.aspx?id=33966" 
+      target=_blank>全部评论</A> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>&nbsp;<IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face1.gif"> 
+      sss &nbsp; <SPAN class=gray>(33 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face1.gif"> 
+      ee &nbsp; <SPAN class=gray>(ww ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face1.gif"> 
+      222222222 &nbsp; <SPAN class=gray>(3333333 ,11月02日 )</SPAN><BR>&nbsp;<IMG 
+      alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face1.gif"> 
+      111 &nbsp; <SPAN class=gray>(222 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face1.gif"> 
+      dfdf &nbsp; <SPAN class=gray>(zfds ,11月02日 )</SPAN><BR></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>发表评论</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <FORM id=remarkForm 
+      style="PADDING-RIGHT: 5px; PADDING-LEFT: 5px; PADDING-BOTTOM: 5px; PADDING-TOP: 5px" 
+      onsubmit="return checkRemark();" action=../../remark.aspx?id=33966 
+      method=post>
+      <SCRIPT language=javascript type=text/javascript>
+			function checkRemark()
+			{
+			var form=document.getElementById("remarkForm");
+			var remarkSize = 1000;
+			if (form.body.value=="")
+			{	alert("请填写评论内容");
+				form.body.focus();
+				return false;
+			}
+			if (form.username.value=="")
+			{	alert("请填写姓名");
+				form.username.focus();
+				return false;
+			}
+			if (form.body.value.length>remarkSize)
+			{	form.body.value = form.body.value.substr(0,remarkSize);
+				showLen(form.body);
+				form.body.focus();
+				alert("评论内容不可以超过"+remarkSize+"字,已帮你删除多余部分");
+				return false;
+			}
+			if (form.username.value.length>10)
+			{	alert("姓名不可以超过10个字");
+				form.username.focus();
+				return false;
+			}
+			form.submit.disabled=true;
+			form.vcode.value = VCode("Android核心分析");
+			return true;
+			}
+			function showLen(obj)
+			{
+				document.getElementById("bodyLen").value=obj.value.length;
+			}
+			</SCRIPT>
+      <INPUT type=radio CHECKED value=1 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face1.gif"><INPUT 
+      type=radio value=2 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face2.gif"><INPUT 
+      type=radio value=3 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face3.gif"><INPUT 
+      type=radio value=4 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face4.gif"><INPUT 
+      type=radio value=5 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face5.gif"><INPUT 
+      type=radio value=6 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face6.gif"><INPUT 
+      type=radio value=7 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face7.gif"><INPUT 
+      type=radio value=8 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face8.gif"><INPUT 
+      type=radio value=9 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face9.gif"><INPUT 
+      type=radio value=10 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face10.gif"><INPUT 
+      type=radio value=11 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face11.gif"><INPUT 
+      type=radio value=12 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face12.gif"><INPUT 
+      type=radio value=13 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face13.gif"><INPUT 
+      type=radio value=14 name=face><IMG alt="" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/face14.gif"> 
+      <BR>请您注意：<BR>遵守国家有关法律、法规，尊重网上道德，承担一切因您的行为而直接或间接引起的法律责任。<BR>LinuxIDC.com拥有管理笔名和留言的一切权利。<BR>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux11.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <DIV style="PADDING-TOP: 5px">点评： <TEXTAREA onkeydown=showLen(this) onkeyup=showLen(this) name=body rows=12 cols=78></TEXTAREA> 
+      字数<INPUT id=bodyLen 
+      style="BORDER-TOP-WIDTH: 0px; BORDER-LEFT-WIDTH: 0px; BACKGROUND: none transparent scroll repeat 0% 0%; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      readOnly size=3> </DIV>
+      <DIV style="PADDING-TOP: 5px">姓名： <INPUT id=i_username maxLength=15 
+      size=10 name=username> <INPUT id=i_submit type=submit value=" 发 表 " name=submit> </DIV>
+      <SCRIPT type=text/javascript>
+			var remarkmember = false;
+			var allowremark = true;
+			if (remarkmember){
+				document.getElementById("i_username").readonly=true;
+				document.write("(限会员登录后发表评论)");
+			}
+			if (!allowremark){
+				document.getElementById("i_submit").disabled=true;
+			}
+			</SCRIPT>
+
+      <SCRIPT 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/clientDate.js" 
+      type=text/javascript></SCRIPT>
+      <INPUT type=hidden name=vcode> </FORM></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV><IFRAME 
+      style="VISIBILITY: hidden; WIDTH: 0px; HEIGHT: 0px" 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/CATZRXFL.htm"></IFRAME></TD>
+    <TD class=linuz vAlign=top>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linuxgif.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>最新资讯</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48852.htm" 
+        target=_blank>不满AMD介入 英特尔拒将Android移植到PC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank>Android 视频缩略图之 MediaStore</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48850.htm" 
+        target=_blank>深度探索Android应用程序的基本原理</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48849.htm" 
+        target=_blank>Linux内核（v0.11）-从开机加电执行到main函数前</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48848.htm" 
+        target=_blank>notepad NppFTP插件连接Linux(此处为Debian)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48847.htm" 
+        target=_blank>mini6410 实现简单 adc驱动--友善版</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48846.htm" 
+        target=_blank>Apache ActiveMQ故障转移机制远程拒绝服务漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48845.htm" 
+        target=_blank>PHP “exif_process_IFD_TAG()”远程整数溢出漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48844.htm" 
+        target=_blank>ProFTPD响应池释放后重用代码执行漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48843.htm" 
+        target=_blank>Mozilla Firefox CSS “:visited”信息泄露漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48842.htm" 
+        target=_blank>解决Gentoo各种问题</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48841.htm" 
+        target=_blank>利用Ubuntu启动U盘安装DOS和WindowsXP</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48840.htm" 
+        target=_blank>利用Linux启动盘切换安装两个盘符一样的Windows</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48839.htm" 
+        target=_blank>利用Ubuntu的分区工具备份与恢复WindowsXP系统分区</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48838.htm" 
+        target=_blank>新的GNOME 3通知设计</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48837.htm" 
+        target=_blank>深度Linux为何是Ubuntu大树上的一支嫩枝芽?</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48836.htm" 
+        target=_blank>Lime诞生 U盘上免费体验Chrome OS</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48835.htm" 
+        target=_blank>Linux 下10款终端音乐播放器</A> 
+        <LI><A 
+        title="编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解决编译C++程序时链接MongoDB动态库失败的问题" 
+        href="http://www.linuxidc.com/Linux/2011-12/48834.htm" 
+        target=_blank>编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48833.htm" 
+        target=_blank>Ubuntu下安装MongoDB全程图解</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=linuzb>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux16.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linux18.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本周热门</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2007-06/4767.htm" 
+        target=_blank>Linux shell脚本全面学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/33966.htm" 
+        target=_blank>Android核心分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-02/24667.htm" 
+        target=_blank>详细易懂的Linux makefile 教程</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39271.htm" 
+        target=_blank>Android Binder设计与实现 – 设计篇</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9623.htm" 
+        target=_blank>Linux内核的ioctl函数学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40508.htm" 
+        target=_blank>技术内幕：Android的IPC机制-Binder</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35982.htm" 
+        target=_blank>u-boot-2009.08在mini2440上的移植</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33600.htm" 
+        target=_blank>S3C2440上LCD驱动(FrameBuffer)实例开发讲解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35392.htm" 
+        target=_blank>Android之PopupWindow弹出对话框</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/41159.htm" 
+        target=_blank>Android控件Gallery 3D效果</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/34541.htm" 
+        target=_blank>Android驱动例子（LED灯控制）</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-08/27880.htm" 
+        target=_blank>Android C/C++ 开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2009-01/18242.htm" 
+        target=_blank>在Linux下安装GCC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-04/25638.htm" 
+        target=_blank>Java删除文件</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39270.htm" 
+        target=_blank>Android深入浅出之Binder机制</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33022.htm" 
+        target=_blank>基于Linux的v4l2视频架构驱动编写</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40495.htm" 
+        target=_blank>Android Bundle类</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-02/32396.htm" 
+        target=_blank>Android RIL 调试分析全记录</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38977.htm" 
+        target=_blank>在Ubuntu上为Android系统编写Linux内核驱动程序</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31291.htm" 
+        target=_blank>Linux Platform驱动程序框架解析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31385.htm" 
+        target=_blank>Android开发入门——Socket编程</A> 
+        <LI><A title="嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发讲解" 
+        href="http://www.linuxidc.com/Linux/2011-02/32646.htm" 
+        target=_blank>嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33086.htm" 
+        target=_blank>Linux下SPI驱动分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38866.htm" 
+        target=_blank>百度地图API之根据经纬度查询地址信息(Android)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9546.htm" 
+        target=_blank>在Windows平台下使用安装GCC(图)</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV></TD></TR></TBODY></TABLE>
+<DIV id=footer><BR>
+<P align=center><A href="http://www.linuxidc.com/aboutus.htm">Linux公社简介</A> - <A 
+href="http://www.linuxidc.com/adsense.htm">广告服务</A> - <A 
+href="http://www.linuxidc.com/sitemap.aspx">网站地图</A> - <A 
+href="http://www.linuxidc.com/help.htm">帮助信息</A> - <A 
+href="http://www.linuxidc.com/contactus.htm">联系我们</A><BR>本站（LinuxIDC）所刊载文章不代表同意其说法或描述，仅为提供更多信息，也不构成任何建议。<BR>
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/qq.js" 
+type=text/javascript></SCRIPT>
+<BR>
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/foot.js" 
+type=text/javascript></SCRIPT>
+<BR>Copyright © 2006-2011　<A href="http://www.linuxidc.com/">Linux公社</A>　All 
+rights reserved 浙ICP备06018118号</P>
+<DIV class=menuskin id=popmenu 
+onmouseover="clearhidemenu();highlightmenu(event,'on')" style="Z-INDEX: 100" 
+onmouseout="highlightmenu(event,'off');dynamichide(event)"></DIV>
+<SCRIPT src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/menu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+
+<SCRIPT type=text/javascript>
+	jsdone=true;
+	</SCRIPT>
+</DIV></DIV>
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linuxren1.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linuxren2.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="IPC框架分析 Binder，Service，Service manager_Android核心分析_files/linuxren3.js" 
+type=text/javascript></SCRIPT>
+</BODY></HTML>

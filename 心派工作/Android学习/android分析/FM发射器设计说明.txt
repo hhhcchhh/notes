@@ -1,0 +1,10 @@
+1. 功能实现在Settings中
+发射器设置加入到Settings中，结构层次如下：
+Wireless & networks => FM transmiter（CheckBox，实现开关）
+Wireless & networks => FM settings
+Wireless & networks => FM settings => 开关（CheckBox，实现开关）
+Wireless & networks => FM settings => 频率（进度条实现，参考Brightness实现）
+Wireless & networks => FM settings => 功率（弹出对话框，参考Screen timeout实现）
+
+2. 快捷方式
+写一个应用调用FM settings这个activity。

@@ -1,0 +1,911 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<!-- saved from url=(0050)http://www.linuxidc.com/Linux/2011-04/33966p11.htm -->
+<HTML lang=utf-8 xmlns="http://www.w3.org/1999/xhtml"><HEAD><TITLE>Android GWES之Android消息系统_Android核心分析</TITLE>
+<META http-equiv=content-type content=text/html;charset=utf-8><LINK 
+href="favicon.ico" type=image/x-icon rel=icon><LINK href="favicon.ico" 
+type=image/x-icon rel="shortcut icon">
+<META 
+content="作为一个从其他平台装接过来的程序员，要从事Andoid平台系统开发，我的关于手机平台上积累的知识已经不能满足需要了，Android为我们带来了大量的新名词，Activity，Manifest，INTENT，Service，Binder，Dalvik虚拟机，Framework，Linux，Navtive ，JNI.....。通过在源代码，在开发社区，在开发博客，甚至在招聘过程中，我不断的寻求Android是什么。经过一定时间的沉淀，我慢慢的理解到Android不仅仅是一类手机的总称，不仅仅是一个手机开发平台，不仅仅是一个虚拟java操作系统，不仅仅是一个开发社区，一个开发标准，不仅仅是一堆代码，Android已经成了一个新的潮流。" 
+name=description>
+<META content=Linux,ubuntu,Fedora,红旗Linux,suse,SQL,PHP,mysql,apache,Linux公社 
+name=keywords>
+<META content="MSHTML 6.00.2900.6169" name=GENERATOR>
+<META content=Linux name=generator><LINK 
+href="Android GWES之Android消息系统_Android核心分析_files/style.css" type=text/css 
+rel=stylesheet>
+<SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/head.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT type=text/javascript>
+var imgMaxWidth=600;
+var urlPrefix="../../";
+</SCRIPT>
+
+<SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/show.js" 
+type=text/javascript></SCRIPT>
+</HEAD>
+<BODY>
+<DIV class=twidth>
+<DIV id=sitehead>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<TABLE width="100%">
+  <TBODY>
+  <TR align=middle>
+    <TD width=160><A href="http://www.linuxidc.com/"><IMG 
+      style="FILTER: chroma(color=#FFFFFF)" 
+      src="Android GWES之Android消息系统_Android核心分析_files/logo.jpg" border=0></A> 
+</TD>
+    <TD>
+      <DIV align=center>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></TD>
+    <TD style="LINE-HEIGHT: 120%" width=100><A 
+      onclick="javascript:window.external.addFavorite('http://www.linuxidc.com/','Linux公社-Linux|Ubuntu|Fedora|新闻|下载|教程|安装|SUSE|Linux发行版|编程|服务器')" 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p11.htm#">加入收藏</A><BR><A 
+      href="http://www.linuxidc.com/sitemap.aspx">网站地图</A><BR><A 
+      href="http://www.linuxidc.com/search.aspx">网站搜索</A><BR>
+      <SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/language.js" 
+      type=text/javascript></SCRIPT>
+    </TD></TR></TBODY></TABLE></DIV></DIV>
+<DIV id=navbar>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m>
+<SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/popmenu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+<A class=first href="http://www.linuxidc.com/index.htm">首页</A><A 
+href="http://www.linuxidc.com/it/index.htm">Linux新闻</A><A 
+href="http://www.linuxidc.com/Linuxit/index.htm">Linux技术交流</A><A 
+href="http://www.linuxidc.com/MySql/index.htm">数据库技术</A><A class=thisclass 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A><A 
+href="http://www.linuxidc.com/Apache/index.htm">服务器应用</A><A 
+href="http://www.linuxidc.com/Unix/index.htm">Linux网络安全</A><A 
+href="http://www.linuxidc.com/download/index.htm">Linux下载</A><A 
+href="http://www.linuxidc.com/Linuxrz/index.htm">Linux认证</A><A 
+href="http://www.linuxidc.com/theme/index.htm">Linux主题</A><A 
+href="http://www.linuxidc.com/Linuxwallpaper/index.htm">Linux壁纸</A><A 
+href="http://www.linuxidc.com/digi/index.htm">数码</A><A 
+href="http://www.linuxidc.com/mobile/index.htm">手机</A><A 
+href="http://www.linuxidc.com/nbook/index.htm">笔记本</A> </DIV></DIV>
+<DIV id=navsub>
+<DIV class=l></DIV>
+<DIV class=r></DIV>
+<DIV class=m><A href="http://www.linuxidc.com/index.htm">首页</A> → <A 
+href="http://www.linuxidc.com/RedLinux/index.htm">Linux编程学习</A> </DIV></DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/linux1.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<DIV class=linus>
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/linuxa.js" 
+type=text/javascript></SCRIPT>
+</DIV>
+<TABLE id=middle style="TABLE-LAYOUT: fixed" cellSpacing=0 cellPadding=0 
+width="100%">
+  <TBODY>
+  <TR>
+    <TD vAlign=top>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>阅读内容</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm id=bodyTd>
+      <DIV id=printBody style="WORD-BREAK: break-all"><BR>
+      <DIV align=center>
+      <H1 class=aTitle>Android核心分析</H1></DIV>
+      <DIV align=center>
+      <H2 class=subTitle>Android GWES之Android消息系统</H2></DIV>
+      <TABLE width="97%" align=center>
+        <TBODY>
+        <TR>
+          <TD width=120>[日期：2011-04-01]</TD>
+          <TD align=middle>来源：Linux社区&nbsp; 作者：maxleng</TD></TR></TBODY></TABLE>
+      <DIV class=linua>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux2.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linub>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux19.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV id=content><!--IWMS_AD_BEGIN-->
+      <TABLE width="97%" align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=3>
+            <DIV align=center>
+            <SCRIPT language=javaScript 
+            src="Android GWES之Android消息系统_Android核心分析_files/system60.js" 
+            type=text/javascript></SCRIPT>
+            </DIV></TD></TR></TBODY></TABLE><!--IWMS_AD_END-->
+      <H1 style="TEXT-ALIGN: center"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>&nbsp;GWES<SPAN 
+      style="FONT-FAMILY: 宋体">之</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Android</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">消息系统</SPAN></H1>
+      <P class=p0 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline">Looper</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handler</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">View</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;&nbsp;<SPAN style="FONT-FAMILY: mceinline"> &nbsp; 
+      &nbsp;我们要理解</SPAN><SPAN><SPAN style="FONT-FAMILY: mceinline"><A 
+      title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的消息系统，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Looper</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handle</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">，</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">View</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">等概念还是需要从消息系统的基本原理及其构造这个源头开始。从这个源头，我们才能很清楚的看到</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Android</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">设计者设计消息系统之意图及其设计的技术路线。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <H2 style="TEXT-ALIGN: center"><SPAN 
+      style="FONT-FAMILY: mceinline">消息系统的基本原理</SPAN></H2>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">从一般的系统设计来讲，一个消息循环系统的建立需要有以下几个要素：</SPAN></P>
+      <UL>
+        <LI><SPAN style="FONT-FAMILY: mceinline">&nbsp;消息队列</SPAN> 
+        <LI><SPAN style="FONT-FAMILY: mceinline">&nbsp;发送消息</SPAN> 
+        <LI><SPAN style="FONT-FAMILY: mceinline">&nbsp;消息读取</SPAN> 
+        <LI><SPAN style="FONT-FAMILY: mceinline">消息分发</SPAN> 
+        <LI><SPAN style="FONT-FAMILY: mceinline">&nbsp;消息循环线程</SPAN> </LI></UL>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">首先来研究一下消息驱动的基本模型，我使用如下的图形来表示一个消息系统最基本构成：</SPAN></P>
+      <P style="TEXT-ALIGN: center"><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/110401062463951.png"></P>
+      <P style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">上面的模型代表应用程序一直查询自己的消息队列</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">,</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">如果有有消息进来</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">,</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">应用</SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">消息处理函数中根据消息类型及其参数来作相应的处理。</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">消息系统要运作起来</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">,</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">必定有消息的产生和消费。我们可以从下图看到消息生产和消费的一个基本的链条，这是一个最基本的，最简单的消息系统。</SPAN></SPAN></P>
+      <P style="TEXT-ALIGN: center"><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/110401062463952.png"></P>
+      <P style="TEXT-ALIGN: left">&nbsp;</P>
+      <P 
+      class=p15>生产线程将消息发送到消息队列，消息消费者线程从消息队列取出消息进行相应的处理。但是这样简单的模型对实际运行的系统来说是不够的，例如对系统资源的消耗等不能很好的处理，我们就需要一个有旗语的消息系统模型，在上面的消息系统模型中加入了一个旗语，让消息消费者线程在没有消息队列为空时，等待旗语，进入到挂起状态，而有消息到达时，才被唤醒继续运行。当然生产者同时也可以是消费者。</P>
+      <P style="TEXT-ALIGN: center"><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/110401062463953.png"></P>
+      <P style="TEXT-ALIGN: center">&nbsp;</P>
+      <P style="TEXT-ALIGN: left">&nbsp;</P>
+      <H3 style="TEXT-ALIGN: center">2&nbsp;<A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A>的消息模型</H3>
+      <P class=p0>Android<SPAN style="FONT-FAMILY: 宋体">要建立一个消息系统使用了</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Looper</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">，</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">MessageQueue,Handler</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">等概念，从上节的原理我们可以知道这些都是概念包装</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">,</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">本质的东西就是消息队列中消息的分发路径的和消息分发处理方式的设计。</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Android</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">巧妙的利用了对象抽象技术抽象出了</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Looper</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">和</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Handler</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">的概念。</SPAN>在<SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Looper</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">和</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Handler</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">两个概念的基础上</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">,</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">通过</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">View</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">的处理函数框架，</SPAN><SPAN 
+      style="FONT-FAMILY: 'Times New Roman'">Android</SPAN><SPAN 
+      style="FONT-FAMILY: 宋体">十分完美的达到消息分发的目的。</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>参照基本消息系统描述模型，我给出了<SPAN 
+      style="FONT-FAMILY: 'Times New Roman'"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN>消息系统整体框架,表示如下：</P>
+      <P class=p0 style="TEXT-ALIGN: center"><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/110401062463954.png"></P>
+      <P class=p0 style="TEXT-ALIGN: center">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A><SPAN 
+      style="FONT-FAMILY: 宋体">消息系统消息分发框架</SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: center"><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/110401062463955.png"></P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <H2 style="TEXT-ALIGN: center">3&nbsp;Looper,Handler<SPAN 
+      style="FONT-FAMILY: 宋体">详解</SPAN></H2>
+      <P class=p0 style="TEXT-ALIGN: left">&nbsp;</P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Looper</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">只是产生一个消息循环框架，首先</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Looper</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">创建了消息队列并把它挂接在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Linux</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的线程上下文中，进入到取消息，并分发消息的循环当中。</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handler</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">对象在同一个线程上下文中取得消息队列，对消息队列进行封装操作，最主要的就是</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">SendMessage</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">和担当起</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">dispatchMessage</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这个实际工作。外部系统需要向某个</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline"><A title=Android 
+      href="http://www.linuxidc.com/topicnews.aspx?tid=11">Android</A></SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">线程发送消息，必须通过属于该</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">AndroidThread</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handler</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">这个对象进行。</SPAN></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: mceinline"><BR></SPAN></P>
+      <P class=p0 style="TEXT-ALIGN: left"><SPAN 
+      style="FONT-FAMILY: 宋体"><BR></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P style="TEXT-ALIGN: center"><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/110401062463956.png"></P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">Handler</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">属于某个线程，取决</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handlerd</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">对象在哪个线程中建立。</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Handler</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">在构建时做了如下的默认动作：</SPAN></SPAN></P>
+      <UL>
+        <LI><SPAN 
+        style="FONT-FAMILY: mceinline">l&nbsp;从线程上下文取得</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Looper</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">。</SPAN></SPAN> 
+        <LI><SPAN style="FONT-FAMILY: mceinline">l&nbsp;通过</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Looper</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">获取到消息队列并记录在自己的成员</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">mQueue</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">变量中</SPAN></SPAN> </LI></UL>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">Handler</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">使用消息队列进行对象封装，提供如下的成员函数：</SPAN></SPAN></P>
+      <UL>
+        <LI><SPAN 
+        style="FONT-FAMILY: mceinline">l&nbsp;通过&nbsp;&nbsp;</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">post(Runnable&nbsp;r)</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">发送。</SPAN></SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Runnable</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">是消息处理的回调函数，通过该消息的发送，引起</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Runable&nbsp;</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">的回调运行，Ｐｏｓｔ消息放置消息队列的前面。</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Message.callback=Runable.</SPAN></SPAN> 
+        <LI><SPAN 
+        style="FONT-FAMILY: mceinline">l&nbsp;通过&nbsp;</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">sendMessage</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">发送。</SPAN></SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">放置在所有的</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Post</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">消息之后，</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">sendMessage</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">发送消息</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">.</SPAN></SPAN> 
+        <LI><SPAN 
+        style="FONT-FAMILY: mceinline">l&nbsp;dispatchMessage分发消息。消息带有回调函数，则执行消息回调函数，如何没有则使用默认处理函数：</SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">handleMessage</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">。而</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">handleMessage</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">往往被重载成某个继承</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">Handler</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">对象的新的特定的</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">handleMessage</SPAN></SPAN><SPAN><SPAN 
+        style="FONT-FAMILY: mceinline">。</SPAN></SPAN> </LI></UL>
+      <P><SPAN style="FONT-FAMILY: mceinline">几乎所有的</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Message</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">发送时，都指定了</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">target</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">。</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Message.target=(this).</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN style="FONT-FAMILY: mceinline">Looper</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">运行在</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Activity</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">何处？我们现在可以从代码堆栈中纵观一下</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Looper</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的位置。</SPAN></SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">NaiveStart.main()</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ZygoteInit.main</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ZygoteInit$MethodAndArgsCall.run</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Method.Invoke</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">method.invokeNative</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ActivityThread.main()</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Looper.loop()</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">ViewRoot$RootHandler().dispatch()</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">handleMessage</SPAN></P>
+      <P class=p0><SPAN style="WHITE-SPACE: pre"><SPAN 
+      style="FONT-FAMILY: mceinline"></SPAN></SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">....</SPAN></P>
+      <P class=p0>&nbsp;</P>
+      <P class=p0><SPAN 
+      style="FONT-FAMILY: mceinline">这样我们就更清楚的了解到</SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">Looper</SPAN></SPAN><SPAN><SPAN 
+      style="FONT-FAMILY: mceinline">的运行位置。</SPAN></SPAN></P></DIV>
+      <DIV class=pager style="TEXT-ALIGN: center"><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p10.htm">上一页</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966.htm">1</A> <A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p8.htm">..8</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p9.htm">9</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p10.htm">10</A><SPAN 
+      class=p_current>11</SPAN><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p12.htm">12</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p13.htm">13</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p14.htm">14</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p15.htm">15</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p16.htm">16</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p17.htm">17..</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">28</A><A 
+      href="http://www.linuxidc.com/Linux/2011-04/33966p12.htm">下一页</A>&nbsp; 
+      <INPUT id=goPage value=12><A href="javascript:pager.Jump();">GO</A>
+      <SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/pager.js" 
+      type=text/javascript></SCRIPT>
+
+      <SCRIPT type=text/javascript>var pager=new iwmsPager(11,28,true);</SCRIPT>
+      </DIV>
+      <TABLE id=dlPages style="CLEAR: both" cellSpacing=0 width="95%" 
+      align=center border=0>
+        <TBODY>
+        <TR>
+          <TD colSpan=2 height=20>【内容导航】</TD></TR>
+        <TR>
+          <TD width="50%" height=20>第1页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966.htm">分析方法论探讨之设计意图</A> 
+          </TD>
+          <TD width="50%" height=20>第2页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p2.htm">方法论探讨之概念空间篇 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第3页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p3.htm">手机硬件形态</A> 
+          </TD>
+          <TD width="50%" height=20>第4页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p4.htm">手机的软件形态</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第5页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p5.htm">基本空间划分</A> 
+          </TD>
+          <TD width="50%" height=20>第6页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p6.htm">IPC框架分析 
+            Binder，Service，Service manager</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第7页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p7.htm">Service深入分析</A> 
+          </TD>
+          <TD width="50%" height=20>第8页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p8.htm">Android 
+            启动过程详解</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第9页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p9.htm">Zygote 
+            Service</A> </TD>
+          <TD width="50%" height=20>第10页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p10.htm">Android 
+            GWES基本框架篇</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第11页：<A class=highlight 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p11.htm">Android 
+            GWES之Android消息系统</A> </TD>
+          <TD width="50%" height=20>第12页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p12.htm">Android 
+            GWES之窗口管理之基本构架原理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第13页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p13.htm">Android 
+            GWES之Android窗口管理</A> </TD>
+          <TD width="50%" height=20>第14页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p14.htm">Android输入系统</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第15页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p15.htm">Android用户事件输入路径</A> 
+          </TD>
+          <TD width="50%" height=20>第16页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p16.htm">Android电话系统之概述篇</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第17页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p17.htm">Android电话系统之-rild</A> 
+          </TD>
+          <TD width="50%" height=20>第18页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p18.htm">Android电话系统之RIL-Java</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第19页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p19.htm">Android电话系统之GSMCallTracker</A> 
+          </TD>
+          <TD width="50%" height=20>第20页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p20.htm">Android应用程序框架之无边界设计理念</A> 
+          </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第21页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p21.htm">Android应用框架之AndroidApplication 
+            </A></TD>
+          <TD width="50%" height=20>第22页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p22.htm">Android应用框架之Activity 
+            </A></TD></TR>
+        <TR>
+          <TD width="50%" height=20>第23页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p23.htm">Andoird 
+            GDI之基本原理及其总体框架</A> </TD>
+          <TD width="50%" height=20>第24页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p24.htm">Android 
+            GDI之显示缓冲管理</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第25页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p25.htm">Androird 
+            GDI之共享缓冲区机制</A> </TD>
+          <TD width="50%" height=20>第26页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p26.htm">Android 
+            GDI之SurfaceFlinger</A> </TD></TR>
+        <TR>
+          <TD width="50%" height=20>第27页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p27.htm">SurfaceFlinger对象建立过程示意</A> 
+          </TD>
+          <TD width="50%" height=20>第28页：<A 
+            href="http://www.linuxidc.com/Linux/2011-04/33966p28.htm">Android 
+            GDI之Surface&amp;Canvas</A> </TD></TR></TBODY></TABLE></DIV><BR>
+      <DIV align=center>
+      <SCRIPT language=javascript 
+      src="Android GWES之Android消息系统_Android核心分析_files/wangzhai.js"></SCRIPT>
+
+      <DIV class=linuc>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux3.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux8.js" 
+      type=text/javascript></SCRIPT>
+      </DIV></DIV><BR>
+      <DIV style="CLEAR: both; PADDING-LEFT: 20px">上一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33964.htm">Linux设备驱动程序学习</A><BR>下一篇：<A 
+      href="http://www.linuxidc.com/Linux/2011-04/33967.htm">Linux Shell 
+      循环计数</A><BR>
+      <DIV align=center>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关资讯</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      href="http://www.linuxidc.com/search.aspx?Where=Nkey&amp;Keyword=Android" 
+      target=_blank>Android</A>&nbsp; </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <TABLE width="100%">
+        <TBODY>
+        <TR>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11309.htm" 
+              target=_blank>Google用Linux的Android打开IC开源大门</A>&nbsp; <SPAN 
+              class=gray>(02/25/2008 06:47:24)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11157.htm" 
+              target=_blank>Gphone手机终于来了!下半年将上市(图)</A>&nbsp; <SPAN 
+              class=gray>(02/14/2008 20:34:03)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2007-12/10010.htm" 
+              target=_blank>自己编译Google Android内核的Linux源码</A>&nbsp; <SPAN 
+              class=gray>(12/24/2007 12:02:34)</SPAN> </LI></UL></TD>
+          <TD vAlign=top width="50%">
+            <UL class=nl>
+              <LI><A href="http://www.linuxidc.com/Linux/2008-02/11226.htm" 
+              target=_blank>评论：Google手机是否遭遇成长的烦恼？</A>&nbsp; <SPAN 
+              class=gray>(02/19/2008 12:02:35)</SPAN> 
+              <LI><A href="http://www.linuxidc.com/Linux/2008-01/10265.htm" 
+              target=_blank>2008年：“云雾计算”正向我们迎面走来</A>&nbsp; <SPAN 
+              class=gray>(01/01/2008 18:57:09)</SPAN> 
+              <LI><A title="Google手机今天发布明年上市 使用Linux操作系统" 
+              href="http://www.linuxidc.com/Linux/2007-11/8792.htm" 
+              target=_blank>Google手机今天发布明年上市 使用Linux操作</A>&nbsp; <SPAN 
+              class=gray>(11/05/2007 06:46:47)</SPAN> 
+      </LI></UL></TD></TR></TBODY></TABLE></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>相关图片</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <DIV class=imgList>
+      <UL>
+        <LI style="WIDTH: 25%"><A title="Android 视频缩略图之 MediaStore" 
+        href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank><IMG height=90 alt="Android 视频缩略图之 MediaStore" 
+        src="Android GWES之Android消息系统_Android核心分析_files/111207070383461t.jpg" 
+        width=120>Android 视频缩略图之</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android 事务操作和数据显示" 
+        href="http://www.linuxidc.com/Linux/2011-12/48806.htm" 
+        target=_blank><IMG height=90 alt="Android 事务操作和数据显示" 
+        src="Android GWES之Android消息系统_Android核心分析_files/111206093397431t.jpg" 
+        width=120>Android 事务操作和数</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android第一个应用程序helloworld项目详解 
+        href="http://www.linuxidc.com/Linux/2011-12/48804.htm" 
+        target=_blank><IMG height=90 alt=Android第一个应用程序helloworld项目详解 
+        src="Android GWES之Android消息系统_Android核心分析_files/111206092952291t.jpg" 
+        width=120>Android第一个应用程</A></LI>
+        <LI style="WIDTH: 25%"><A title=Android应用开发之开发环境搭建 
+        href="http://www.linuxidc.com/Linux/2011-12/48803.htm" 
+        target=_blank><IMG height=90 alt=Android应用开发之开发环境搭建 
+        src="Android GWES之Android消息系统_Android核心分析_files/111206092691795t.jpg" 
+        width=120>Android应用开发之开</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        title="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        href="http://www.linuxidc.com/Linux/2011-12/48802.htm" 
+        target=_blank><IMG height=90 
+        alt="Android修改Eclipse 中的Default debug keystore路径及修改android的AVD默认路径" 
+        src="Android GWES之Android消息系统_Android核心分析_files/11120609225871t.jpg" 
+        width=120>Android修改Eclipse </A></LI>
+        <LI style="WIDTH: 25%"><A title=Android与JavaScript相互调用 
+        href="http://www.linuxidc.com/Linux/2011-12/48801.htm" 
+        target=_blank><IMG height=90 alt=Android与JavaScript相互调用 
+        src="Android GWES之Android消息系统_Android核心分析_files/111206092021191t.jpg" 
+        width=120>Android与JavaScript</A></LI>
+        <LI style="WIDTH: 25%"><A 
+        href="http://www.linuxidc.com/Linux/2011-12/48800.htm" 
+        target=_blank><IMG height=90 alt=Android之帧动画实现 
+        src="Android GWES之Android消息系统_Android核心分析_files/111206091880021t.jpg" 
+        width=120>Android之帧动画实现</A></LI>
+        <LI style="WIDTH: 25%"><A title="Android Activity 和 HTML 数据通信" 
+        href="http://www.linuxidc.com/Linux/2011-12/48794.htm" 
+        target=_blank><IMG height=90 alt="Android Activity 和 HTML 数据通信" 
+        src="Android GWES之Android消息系统_Android核心分析_files/111206091188453t.jpg" 
+        width=120>Android Activity 和 </A></LI></UL></DIV></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本文评论</SPAN> &nbsp; &nbsp; &nbsp; <A 
+      style="CURSOR: hand" href="http://www.linuxidc.com/remark.aspx?id=33966" 
+      target=_blank>全部评论</A> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>&nbsp;<IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face1.gif"> sss &nbsp; 
+      <SPAN class=gray>(33 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face1.gif"> ee &nbsp; 
+      <SPAN class=gray>(ww ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face1.gif"> 222222222 
+      &nbsp; <SPAN class=gray>(3333333 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face1.gif"> 111 &nbsp; 
+      <SPAN class=gray>(222 ,11月02日 )</SPAN><BR>&nbsp;<IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face1.gif"> dfdf &nbsp; 
+      <SPAN class=gray>(zfds ,11月02日 )</SPAN><BR></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=mframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>发表评论</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <FORM id=remarkForm 
+      style="PADDING-RIGHT: 5px; PADDING-LEFT: 5px; PADDING-BOTTOM: 5px; PADDING-TOP: 5px" 
+      onsubmit="return checkRemark();" action=../../remark.aspx?id=33966 
+      method=post>
+      <SCRIPT language=javascript type=text/javascript>
+			function checkRemark()
+			{
+			var form=document.getElementById("remarkForm");
+			var remarkSize = 1000;
+			if (form.body.value=="")
+			{	alert("请填写评论内容");
+				form.body.focus();
+				return false;
+			}
+			if (form.username.value=="")
+			{	alert("请填写姓名");
+				form.username.focus();
+				return false;
+			}
+			if (form.body.value.length>remarkSize)
+			{	form.body.value = form.body.value.substr(0,remarkSize);
+				showLen(form.body);
+				form.body.focus();
+				alert("评论内容不可以超过"+remarkSize+"字,已帮你删除多余部分");
+				return false;
+			}
+			if (form.username.value.length>10)
+			{	alert("姓名不可以超过10个字");
+				form.username.focus();
+				return false;
+			}
+			form.submit.disabled=true;
+			form.vcode.value = VCode("Android核心分析");
+			return true;
+			}
+			function showLen(obj)
+			{
+				document.getElementById("bodyLen").value=obj.value.length;
+			}
+			</SCRIPT>
+      <INPUT type=radio CHECKED value=1 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face1.gif"><INPUT 
+      type=radio value=2 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face2.gif"><INPUT 
+      type=radio value=3 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face3.gif"><INPUT 
+      type=radio value=4 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face4.gif"><INPUT 
+      type=radio value=5 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face5.gif"><INPUT 
+      type=radio value=6 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face6.gif"><INPUT 
+      type=radio value=7 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face7.gif"><INPUT 
+      type=radio value=8 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face8.gif"><INPUT 
+      type=radio value=9 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face9.gif"><INPUT 
+      type=radio value=10 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face10.gif"><INPUT 
+      type=radio value=11 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face11.gif"><INPUT 
+      type=radio value=12 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face12.gif"><INPUT 
+      type=radio value=13 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face13.gif"><INPUT 
+      type=radio value=14 name=face><IMG alt="" 
+      src="Android GWES之Android消息系统_Android核心分析_files/face14.gif"> 
+      <BR>请您注意：<BR>遵守国家有关法律、法规，尊重网上道德，承担一切因您的行为而直接或间接引起的法律责任。<BR>LinuxIDC.com拥有管理笔名和留言的一切权利。<BR>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux11.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <DIV style="PADDING-TOP: 5px">点评： <TEXTAREA onkeydown=showLen(this) onkeyup=showLen(this) name=body rows=12 cols=78></TEXTAREA> 
+      字数<INPUT id=bodyLen 
+      style="BORDER-TOP-WIDTH: 0px; BORDER-LEFT-WIDTH: 0px; BACKGROUND: none transparent scroll repeat 0% 0%; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px" 
+      readOnly size=3> </DIV>
+      <DIV style="PADDING-TOP: 5px">姓名： <INPUT id=i_username maxLength=15 
+      size=10 name=username> <INPUT id=i_submit type=submit value=" 发 表 " name=submit> </DIV>
+      <SCRIPT type=text/javascript>
+			var remarkmember = false;
+			var allowremark = true;
+			if (remarkmember){
+				document.getElementById("i_username").readonly=true;
+				document.write("(限会员登录后发表评论)");
+			}
+			if (!allowremark){
+				document.getElementById("i_submit").disabled=true;
+			}
+			</SCRIPT>
+
+      <SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/clientDate.js" 
+      type=text/javascript></SCRIPT>
+      <INPUT type=hidden name=vcode> </FORM></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV><IFRAME 
+      style="VISIBILITY: hidden; WIDTH: 0px; HEIGHT: 0px" 
+      src="Android GWES之Android消息系统_Android核心分析_files/CASXE74X.htm"></IFRAME></TD>
+    <TD class=linuz vAlign=top>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript src="" type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=linuzs>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linuxgif.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>最新资讯</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48852.htm" 
+        target=_blank>不满AMD介入 英特尔拒将Android移植到PC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48851.htm" 
+        target=_blank>Android 视频缩略图之 MediaStore</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48850.htm" 
+        target=_blank>深度探索Android应用程序的基本原理</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48849.htm" 
+        target=_blank>Linux内核（v0.11）-从开机加电执行到main函数前</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48848.htm" 
+        target=_blank>notepad NppFTP插件连接Linux(此处为Debian)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48847.htm" 
+        target=_blank>mini6410 实现简单 adc驱动--友善版</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48846.htm" 
+        target=_blank>Apache ActiveMQ故障转移机制远程拒绝服务漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48845.htm" 
+        target=_blank>PHP “exif_process_IFD_TAG()”远程整数溢出漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48844.htm" 
+        target=_blank>ProFTPD响应池释放后重用代码执行漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48843.htm" 
+        target=_blank>Mozilla Firefox CSS “:visited”信息泄露漏洞</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48842.htm" 
+        target=_blank>解决Gentoo各种问题</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48841.htm" 
+        target=_blank>利用Ubuntu启动U盘安装DOS和WindowsXP</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48840.htm" 
+        target=_blank>利用Linux启动盘切换安装两个盘符一样的Windows</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48839.htm" 
+        target=_blank>利用Ubuntu的分区工具备份与恢复WindowsXP系统分区</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48838.htm" 
+        target=_blank>新的GNOME 3通知设计</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48837.htm" 
+        target=_blank>深度Linux为何是Ubuntu大树上的一支嫩枝芽?</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48836.htm" 
+        target=_blank>Lime诞生 U盘上免费体验Chrome OS</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48835.htm" 
+        target=_blank>Linux 下10款终端音乐播放器</A> 
+        <LI><A 
+        title="编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解决编译C++程序时链接MongoDB动态库失败的问题" 
+        href="http://www.linuxidc.com/Linux/2011-12/48834.htm" 
+        target=_blank>编写简单的连接MongoDB数据库C++程序 &amp;&amp; 解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-12/48833.htm" 
+        target=_blank>Ubuntu下安装MongoDB全程图解</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV>
+      <DIV class=linuzb>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux16.js" 
+      type=text/javascript></SCRIPT>
+      <BR>
+      <SCRIPT language=javaScript 
+      src="Android GWES之Android消息系统_Android核心分析_files/linux18.js" 
+      type=text/javascript></SCRIPT>
+      </DIV>
+      <DIV class=lframe>
+      <DIV class=tl></DIV>
+      <DIV class=tr></DIV>
+      <DIV class=tm><SPAN class=tt>本周热门</SPAN> </DIV>
+      <DIV class=wrapper>
+      <DIV class=ml></DIV>
+      <DIV class=mr></DIV>
+      <DIV class=mm>
+      <UL class=nl>
+        <LI><A href="http://www.linuxidc.com/Linux/2007-06/4767.htm" 
+        target=_blank>Linux shell脚本全面学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/33966.htm" 
+        target=_blank>Android核心分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-02/24667.htm" 
+        target=_blank>详细易懂的Linux makefile 教程</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39271.htm" 
+        target=_blank>Android Binder设计与实现 – 设计篇</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9623.htm" 
+        target=_blank>Linux内核的ioctl函数学习</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40508.htm" 
+        target=_blank>技术内幕：Android的IPC机制-Binder</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35982.htm" 
+        target=_blank>u-boot-2009.08在mini2440上的移植</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33600.htm" 
+        target=_blank>S3C2440上LCD驱动(FrameBuffer)实例开发讲解</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-05/35392.htm" 
+        target=_blank>Android之PopupWindow弹出对话框</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/41159.htm" 
+        target=_blank>Android控件Gallery 3D效果</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-04/34541.htm" 
+        target=_blank>Android驱动例子（LED灯控制）</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-08/27880.htm" 
+        target=_blank>Android C/C++ 开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2009-01/18242.htm" 
+        target=_blank>在Linux下安装GCC</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2010-04/25638.htm" 
+        target=_blank>Java删除文件</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/39270.htm" 
+        target=_blank>Android深入浅出之Binder机制</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33022.htm" 
+        target=_blank>基于Linux的v4l2视频架构驱动编写</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-08/40495.htm" 
+        target=_blank>Android Bundle类</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-02/32396.htm" 
+        target=_blank>Android RIL 调试分析全记录</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38977.htm" 
+        target=_blank>在Ubuntu上为Android系统编写Linux内核驱动程序</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31291.htm" 
+        target=_blank>Linux Platform驱动程序框架解析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-01/31385.htm" 
+        target=_blank>Android开发入门——Socket编程</A> 
+        <LI><A title="嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发讲解" 
+        href="http://www.linuxidc.com/Linux/2011-02/32646.htm" 
+        target=_blank>嵌入式Linux知识：S3C2440上 MMC/SD卡驱动实例开发</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-03/33086.htm" 
+        target=_blank>Linux下SPI驱动分析</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2011-07/38866.htm" 
+        target=_blank>百度地图API之根据经纬度查询地址信息(Android)</A> 
+        <LI><A href="http://www.linuxidc.com/Linux/2007-12/9546.htm" 
+        target=_blank>在Windows平台下使用安装GCC(图)</A> </LI></UL></DIV></DIV>
+      <DIV class=bl></DIV>
+      <DIV class=br></DIV>
+      <DIV class=bm></DIV></DIV></TD></TR></TBODY></TABLE>
+<DIV id=footer><BR>
+<P align=center><A href="http://www.linuxidc.com/aboutus.htm">Linux公社简介</A> - <A 
+href="http://www.linuxidc.com/adsense.htm">广告服务</A> - <A 
+href="http://www.linuxidc.com/sitemap.aspx">网站地图</A> - <A 
+href="http://www.linuxidc.com/help.htm">帮助信息</A> - <A 
+href="http://www.linuxidc.com/contactus.htm">联系我们</A><BR>本站（LinuxIDC）所刊载文章不代表同意其说法或描述，仅为提供更多信息，也不构成任何建议。<BR>
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/qq.js" 
+type=text/javascript></SCRIPT>
+<BR>
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/foot.js" 
+type=text/javascript></SCRIPT>
+<BR>Copyright © 2006-2011　<A href="http://www.linuxidc.com/">Linux公社</A>　All 
+rights reserved 浙ICP备06018118号</P>
+<DIV class=menuskin id=popmenu 
+onmouseover="clearhidemenu();highlightmenu(event,'on')" style="Z-INDEX: 100" 
+onmouseout="highlightmenu(event,'off');dynamichide(event)"></DIV>
+<SCRIPT src="Android GWES之Android消息系统_Android核心分析_files/menu.js" 
+type=text/javascript charset=utf-8></SCRIPT>
+
+<SCRIPT type=text/javascript>
+	jsdone=true;
+	</SCRIPT>
+</DIV></DIV>
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/linuxren1.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/linuxren2.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=javaScript 
+src="Android GWES之Android消息系统_Android核心分析_files/linuxren3.js" 
+type=text/javascript></SCRIPT>
+</BODY></HTML>
